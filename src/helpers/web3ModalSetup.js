@@ -12,10 +12,9 @@ const web3ModalSetup = () =>
         package: WalletConnectProvider,
         options: {
           rpc: {
-           // 97: "https://data-seed-prebsc-1-s1.binance.org:8545/", // avax
-
-             56: "https://bsc-dataseed.binance.org",
-             //4002: "https://rpc.testnet.fantom.network/",
+            97: "https://data-seed-prebsc-1-s1.binance.org:8545/"
+            //  56: "https://bsc-dataseed.binance.org",
+            //4002: "https://rpc.testnet.fantom.network/",
           },
         },
       },

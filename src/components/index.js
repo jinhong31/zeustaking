@@ -5,7 +5,7 @@ import getAbi from "../Abi";
 import getAbiBusd from "./../Abi/busd";
 import logo from "./../assets/logo.png";
 import audit from "./../assets/audit.png";
-
+import { CONTRACTADDR } from "../Abi";
 
 /* eslint-disable no-unused-vars */
 const web3Modal = web3ModalSetup();
@@ -51,7 +51,7 @@ const Interface = () => {
 
   if (DefaultLink === null) {
     DefaultLink = "0xc3a16eC67EDD28782B9F983b0e762a5B042e5744";
-    console.log("Default Ref", DefaultLink);
+    // console.log("Default Ref", DefaultLink);
   }
 
   const logoutOfWeb3Modal = async () => {
@@ -105,13 +105,13 @@ const Interface = () => {
     // eslint-disable-next-line
   }, [setInjectedProvider]);
 
-  useEffect(() => {
-    setInterval(() => {
-      setRefetch((prevRefetch) => {
-        return !prevRefetch;
-      });
-    }, 10000);
-  }, []);
+  // useEffect(() => {
+  //   setInterval(() => {
+  //     setRefetch((prevRefetch) => {
+  //       return !prevRefetch;
+  //     });
+  //   }, 10000);
+  // }, []);
 
   useEffect(() => {
     if (web3Modal.cachedProvider) {
@@ -150,11 +150,8 @@ const Interface = () => {
     const AbiContract = async () => {
       if (!isConnected || !web3) return;
       const contractBalance = await Abi.methods.getBalance().call();
-
-
+      console.log(contractBalance)
       setContractBalance(contractBalance / 10e17);
-
-
     };
 
     AbiContract();
@@ -163,6 +160,7 @@ const Interface = () => {
 
   useEffect(() => {
     const Contract = async () => {
+      console.log(CONTRACTADDR, "dddddddd")
       if (isConnected && Abi) {
         console.log(current);
 
@@ -255,7 +253,7 @@ const Interface = () => {
     const approvalallowance = async () => {
       if (isConnected && AbiBusd) {
 
-        let _contract = '0xb9150107F2820930D997a91f03Ba81A8d625F337';
+        let _contract = CONTRACTADDR;
         let _allowance = await AbiBusd.methods.allowance(current, _contract).call();
         setAllowance(_allowance);
 
@@ -321,7 +319,7 @@ const Interface = () => {
     if (isConnected && AbiBusd) {
       console.log("success")
       setPendingMessage("Approving Busd");
-      let contract = '0xb9150107F2820930D997a91f03Ba81A8d625F337';
+      let contract = CONTRACTADDR;
       let _amount = '99999999999999999999999999999999999';
       await AbiBusd.methods.approve(contract, _amount).send({
         from: current,
@@ -372,7 +370,7 @@ const Interface = () => {
             </li>
           </ul>
 
-          <button className="btn btn-primary btn-lg btnd" style={{ background: "#f68f19", color: "black", border: "1px solid #fff" }} onClick={loadWeb3Modal}><i className="fas fa-wallet"></i> {connButtonText}</button>
+          <button className="btn btn-primary btn-lg btnd" style={{ background: "yellow", color: "black", border: "1px solid #fff" }} onClick={loadWeb3Modal}><i className="fas fa-wallet"></i> {connButtonText}</button>
 
 
 
@@ -414,7 +412,7 @@ const Interface = () => {
               <div className="card-body">
                 <center>  <h3>Daily ROI</h3>
 
-                  <h3>8%</h3>
+                  <h3>3%</h3>
 
                 </center>
               </div>
@@ -440,7 +438,7 @@ const Interface = () => {
               <div className="card-body">
                 <center>  <h3>Deposit Fee</h3>
 
-                  <h4>Marketing 4% + Dev 2%</h4>
+                  <h4>6%</h4>
 
                 </center>
               </div>
@@ -489,8 +487,6 @@ const Interface = () => {
                         onChange={(e) => setValue(e.target.value)}
                       />
                       </td>
-
-
 
                         <td style={{ textAlign: "right" }}>
                           {allowance > 0 ? <>
@@ -641,21 +637,14 @@ const Interface = () => {
           </div>
         </div>
 
-        <br />
-        <center>
-          <h2>Join DinoBusd Lottery Now</h2>
-          <p>Feelin Lucky? </p>
-          <a href="https://lotto.dinobusd.finance"><button className="btn btn-primary btn-lg btnd" style={{ background: "black", color: "#f68f19", border: "1px solid #fff" }}>PLAY NOW</button></a>
-        </center>
-
-        <br />
+        {/* <br />
         <center>
           <h2>Audit Partner</h2>
           <a href="audit.pdf"><img src={audit} alt={audit} className="img-fluid" style={{ width: "300px" }} /> </a>
-        </center>
+        </center> */}
 
         <br />
-        <center><h5> <a href="https://twitter.com/dinobusd" style={{ color: "#f68f19", textDecoration: "none" }}><i class="fa fa-twitter"></i> Twitter </a> || <a href="https://t.me/DinoBusdOfficial" style={{ color: "#f68f19", textDecoration: "none" }}><i class="fa fa-telegram"></i> Telegram </a> || <a href="audit.pdf" style={{ color: "#f68f19", textDecoration: "none" }}><i class="fa fa-file-code-o"></i> Audit </a>|| <a href="https://bscscan.com/address/0xb9150107F2820930D997a91f03Ba81A8d625F337#code" style={{ color: "#f68f19", textDecoration: "none" }}><i class="fa fa-line-chart"></i> Bscscan </a></h5></center>
+        <center><h5> <a href="https://twitter.com/dinobusd" style={{ color: "#f68f19", textDecoration: "none" }}><i className="fa fa-twitter"></i> Twitter </a> || <a href="https://t.me/DinoBusdOfficial" style={{ color: "#f68f19", textDecoration: "none" }}><i className="fa fa-telegram"></i> Telegram </a> || <a href="audit.pdf" style={{ color: "#f68f19", textDecoration: "none" }}><i className="fa fa-file-code-o"></i> Audit </a>|| <a href="https://bscscan.com/address/0x6137291056de7d362711c6e4A7810823e5c79431#code" style={{ color: "#f68f19", textDecoration: "none" }}><i className="fa fa-line-chart"></i> Bscscan </a></h5></center>
 
         <br />
       </div>
