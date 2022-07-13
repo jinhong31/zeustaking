@@ -22,33 +22,36 @@ const Interface = () => {
   const [current, setCurrent] = useState(null);
   const [connButtonText, setConnButtonText] = useState("CONNECT");
   const [refLink, setRefLink] = useState(
-      "https://dinobusd.finance/?ref=0x0000000000000000000000000000000000000000"
-    );
+    "https://dinobusd.finance/?ref=0x0000000000000000000000000000000000000000"
+  );
   const [contractBalance, setContractBalance] = useState(0);
-  const [userBalance,setUserBalance] = useState(0);
-  const [userInvestment,setUserInvestment] = useState(0);
+  const [userBalance, setUserBalance] = useState(0);
+  const [userInvestment, setUserInvestment] = useState(0);
   const [userDailyRoi, setUserDailyRoi] = useState(0);
-  const [approvedWithdraw,setApprovedWithdraw] = useState(0);
-  const [lastWithdraw,setLastWithdraw] = useState(0);
+  const [dailyReward, setDailyReward] = useState(0);
+  const [startTime, setClaimStartTime] = useState(0);
+  const [deadline, setClaimDeadline] = useState(0);
+  const [approvedWithdraw, setApprovedWithdraw] = useState(0);
+  const [lastWithdraw, setLastWithdraw] = useState(0);
   const [nextWithdraw, setNextWithdraw] = useState(0);
-  const [totalWithdraw,setTotalWithdraw] = useState(0);
-  const [refferalReward,setRefferalReward] = useState(0);
+  const [totalWithdraw, setTotalWithdraw] = useState(0);
+  const [refferalReward, setRefferalReward] = useState(0);
   const [refTotalWithdraw, setRefTotalWithdraw] = useState(0);
   const [value, setValue] = useState('');
-  const [balance,setBalance] = useState(0);
+  const [balance, setBalance] = useState(0);
 
-  const [pendingMessage,setPendingMessage] = useState('');
-  const [allowance,setAllowance] = useState();
-  const [calculate,setCalculator] = useState('');
+  const [pendingMessage, setPendingMessage] = useState('');
+  const [allowance, setAllowance] = useState();
+  const [calculate, setCalculator] = useState('');
 
 
-  
+
   const queryParams = new URLSearchParams(window.location.search);
   let DefaultLink = queryParams.get("ref");
 
   if (DefaultLink === null) {
     DefaultLink = "0xc3a16eC67EDD28782B9F983b0e762a5B042e5744";
-    console.log("Default Ref",DefaultLink);
+    console.log("Default Ref", DefaultLink);
   }
 
   const logoutOfWeb3Modal = async () => {
@@ -71,7 +74,7 @@ const Interface = () => {
       ? provider.selectedAddress
       : provider.accounts[0];
 
-    
+
     const short = shortenAddr(acc);
 
     setWeb3(new Web3(provider));
@@ -81,7 +84,7 @@ const Interface = () => {
     setCurrent(acc);
     //     setShorttened(short);
     setIsConnected(true);
-    
+
     setConnButtonText(short);
 
     provider.on("chainChanged", (chainId) => {
@@ -139,19 +142,19 @@ const Interface = () => {
     refData();
   }, [isConnected, current, web3, refetch]);
 
-  
-  
+
+
 
 
   useEffect(() => {
     const AbiContract = async () => {
       if (!isConnected || !web3) return;
       const contractBalance = await Abi.methods.getBalance().call();
-      
-    
+
+
       setContractBalance(contractBalance / 10e17);
-      
-    
+
+
     };
 
     AbiContract();
@@ -163,14 +166,22 @@ const Interface = () => {
       if (isConnected && Abi) {
         console.log(current);
 
-      let userBalance = await AbiBusd.methods.balanceOf(current).call();
-      setUserBalance(userBalance);
+        let userBalance = await AbiBusd.methods.balanceOf(current).call();
+        setUserBalance(userBalance);
 
-      let userInvestment = await Abi.methods.investments(current).call();
-      setUserInvestment(userInvestment.invested / 10e17);
+        let userInvestment = await Abi.methods.investments(current).call();
+        setUserInvestment(userInvestment.invested / 10e17);
 
-      let dailyRoi = await Abi.methods.DailyRoi(userInvestment.invested).call();
-      setUserDailyRoi(dailyRoi / 10e17);
+        let dailyRoi = await Abi.methods.DailyRoi(userInvestment.invested).call();
+        setUserDailyRoi(dailyRoi / 10e17);
+
+        let dailyReward = await Abi.methods.userReward(current).call();
+        setDailyReward(dailyReward / 10e17);
+
+
+
+
+
       }
     };
 
@@ -180,27 +191,36 @@ const Interface = () => {
 
   useEffect(() => {
     const Withdrawlconsole = async () => {
-      if(isConnected && Abi) {
-      let approvedWithdraw = await Abi.methods.approvedWithdrawal(current).call();
-      setApprovedWithdraw(approvedWithdraw.amount / 10e17);
+      if (isConnected && Abi) {
+        let approvedWithdraw = await Abi.methods.approvedWithdrawal(current).call();
+        setApprovedWithdraw(approvedWithdraw.amount / 10e17);
 
-      let totalWithdraw = await Abi.methods.totalWithdraw(current).call();
-      setTotalWithdraw(totalWithdraw.amount / 10e17);
-    }
+        let totalWithdraw = await Abi.methods.totalWithdraw(current).call();
+        setTotalWithdraw(totalWithdraw.amount / 10e17);
+      }
     }
     Withdrawlconsole();
     // eslint-disable-next-line
-  },[refetch]);
+  }, [refetch]);
 
   useEffect(() => {
     const TimeLine = async () => {
-      if(isConnected && Abi) {
+      if (isConnected && Abi) {
         let claimTime = await Abi.methods.claimTime(current).call();
-        
-        if(claimTime.startTime > 0) {
+        if (claimTime.startTime > 0) {
+          let _claimStart = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).format(claimTime.startTime + "000");
+          let _claimEnd = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).format(claimTime.deadline + "000");
+          setClaimStartTime(_claimStart);
+
+          setClaimDeadline(_claimEnd);
+
+
+
+
+
           let weekly = await Abi.methods.weekly(current).call();
-          let _start = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'}).format(weekly.startTime + "000");
-          let _end = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'}).format(weekly.deadline + "000");
+          let _start = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).format(weekly.startTime + "000");
+          let _end = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).format(weekly.deadline + "000");
 
           setLastWithdraw(_start);
           setNextWithdraw(_end);
@@ -209,18 +229,21 @@ const Interface = () => {
     }
     TimeLine();
     // eslint-disable-next-line
-  },[refetch]);
+  }, [refetch]);
 
 
   useEffect(() => {
     const ContractReward = async () => {
       if (isConnected && Abi) {
-    
-      let refEarnedWithdraw = await Abi.methods.refferal(current).call();
-      setRefferalReward(refEarnedWithdraw.reward / 10e17);
 
-      let refTotalWithdraw = await Abi.methods.refTotalWithdraw(current).call();
-      setRefTotalWithdraw(refTotalWithdraw.totalWithdraw / 10e17);
+
+        let refEarnedWithdraw = await Abi.methods.refferal(current).call();
+        setRefferalReward(refEarnedWithdraw.reward / 10e17);
+
+        let refTotalWithdraw = await Abi.methods.refTotalWithdraw(current).call();
+        setRefTotalWithdraw(refTotalWithdraw.totalWithdraw / 10e17);
+
+
       }
     };
 
@@ -232,9 +255,11 @@ const Interface = () => {
     const approvalallowance = async () => {
       if (isConnected && AbiBusd) {
 
-          let _contract = '0xb9150107F2820930D997a91f03Ba81A8d625F337';
-          let _allowance = await AbiBusd.methods.allowance(current,_contract).call();
-          setAllowance(_allowance);
+        let _contract = '0xb9150107F2820930D997a91f03Ba81A8d625F337';
+        let _allowance = await AbiBusd.methods.allowance(current, _contract).call();
+        setAllowance(_allowance);
+
+
       }
     };
 
@@ -242,18 +267,20 @@ const Interface = () => {
     // eslint-disable-next-line
   }, [refetch]);
 
+
+
   // buttons
 
   const ClaimNow = async (e) => {
     e.preventDefault();
     if (isConnected && Abi) {
-        console.log("success")
-        setPendingMessage("Claiming Funds")
+      console.log("success")
+      setPendingMessage("Claiming Funds")
       await Abi.methods.claimDailyRewards().send({
         from: current,
       });
       setPendingMessage("Claimed Successfully");
-      
+
     } else {
       console.log("connect wallet");
     }
@@ -262,13 +289,13 @@ const Interface = () => {
   const withDraw = async (e) => {
     e.preventDefault();
     if (isConnected && Abi) {
-        console.log("success")
-        setPendingMessage("Withdrawing funds")
+      console.log("success")
+      setPendingMessage("Withdrawing funds")
       await Abi.methods.withdrawal().send({
         from: current,
       });
       setPendingMessage("Successfully Withdraw");
-      
+
     } else {
       console.log("connect wallet");
     }
@@ -277,13 +304,13 @@ const Interface = () => {
   const refWithdraw = async (e) => {
     e.preventDefault();
     if (isConnected && Abi) {
-        console.log("success")
-        setPendingMessage("Rewards withdrawing")
+      console.log("success")
+      setPendingMessage("Rewards withdrawing")
       await Abi.methods.Ref_Withdraw().send({
         from: current,
       });
       setPendingMessage("Successfully Withdraw");
-      
+
     } else {
       console.log("connect wallet");
     }
@@ -296,8 +323,8 @@ const Interface = () => {
       setPendingMessage("Approving Busd");
       let contract = '0xb9150107F2820930D997a91f03Ba81A8d625F337';
       let _amount = '99999999999999999999999999999999999';
-      await AbiBusd.methods.approve(contract,_amount).send({
-          from: current,
+      await AbiBusd.methods.approve(contract, _amount).send({
+        from: current,
       });
       setPendingMessage("Approved Successfully");
     }
@@ -305,11 +332,11 @@ const Interface = () => {
       console.log("connect wallet");
     }
   };
-  
+
   const closeBar = async (e) => {
     e.preventDefault();
     setPendingMessage('');
-  } 
+  }
 
   const deposit = async (e) => {
     e.preventDefault();
@@ -317,8 +344,8 @@ const Interface = () => {
       console.log("success")
       setPendingMessage("Deposit Pending...!")
       let _value = web3.utils.toWei(value);
-      await Abi.methods.deposit(DefaultLink,_value).send({
-          from: current,
+      await Abi.methods.deposit(DefaultLink, _value).send({
+        from: current,
       });
       setPendingMessage("Successfully Deposited")
     }
@@ -326,296 +353,314 @@ const Interface = () => {
       console.log("connect wallet");
     }
   };
-    
 
-  return( 
+
+  return (
     <>
-      <nav className="navbar navbar-expand-sm navbar-dark" style={{background:"black"}}>
+      <nav className="navbar navbar-expand-sm navbar-dark" style={{ background: "black" }}>
         <div className="container-fluid">
-          <a className="navbar-brand" href="https://dinobusd.finance"><img src={logo} alt="logo" className="img-fluid" style={{width:"200px"}} /></a>
-        
-          
-            <ul className="navbar-nav me-auto">
-            
-              <li className="nav-item">
-                <a className="nav-link" href="whitepaper.pdf">WHITEPAPER</a>
-              </li>
-              <li className="nav-item">
-                <a className="nav-link" href="audit.pdf">AUDIT</a>
-              </li>
-            </ul>
-              
-            <button className="btn btn-primary btn-lg btnd" style={{background:"#f68f19",color:"black",border:"1px solid #fff"}} onClick={loadWeb3Modal}><i className="fas fa-wallet"></i> {connButtonText}</button>
-                
-          
+          <a className="navbar-brand" href="https://dinobusd.finance"><img src={logo} alt="logo" className="img-fluid" style={{ width: "200px" }} /></a>
+
+
+          <ul className="navbar-nav me-auto">
+
+            <li className="nav-item">
+              <a className="nav-link" href="whitepaper.pdf">WHITEPAPER</a>
+            </li>
+            <li className="nav-item">
+              <a className="nav-link" href="audit.pdf">AUDIT</a>
+            </li>
+          </ul>
+
+          <button className="btn btn-primary btn-lg btnd" style={{ background: "#f68f19", color: "black", border: "1px solid #fff" }} onClick={loadWeb3Modal}><i className="fas fa-wallet"></i> {connButtonText}</button>
+
+
 
         </div>
       </nav>
       <br />
 
       <div className="container">
-            
-      {pendingMessage!==''? 
-        <>
-          <center>
-            <div className="alert alert-warning alert-dismissible">
-            <p onClick={closeBar} className="badge bg-dark" style={{float:"right",cursor: "pointer"}}>X</p>
-              {pendingMessage}
-            </div>
-          </center>
-        </> :
 
-        <></>
-      }
+        {pendingMessage !== '' ?
+          <>
+            <center>
+              <div className="alert alert-warning alert-dismissible">
+                <p onClick={closeBar} className="badge bg-dark" style={{ float: "right", cursor: "pointer" }}>X</p>
+                {pendingMessage}
+              </div>
+            </center>
+          </> :
+
+          <></>
+        }
         <div className="row">
-            <div className="col-sm-3">
-              <div className="card">
-                <div className="card-body">
-              <center>  <h3>Contract Balance</h3>
-                
-                <h3> {Number(contractBalance).toFixed(2)} BUSD</h3>
-                
+          <div className="col-sm-3">
+            <div className="card">
+              <div className="card-body">
+                <center>  <h3>Contract Balance</h3>
+
+                  <h3> {Number(contractBalance).toFixed(2)} BUSD</h3>
+
                 </center>
-                </div>
               </div>
             </div>
+          </div>
 
 
 
-            <div className="col-sm-3">
-              <div className="card">
-                <div className="card-body">
-              <center>  <h3>Daily ROI</h3>
-                
-                <h3>8%</h3>
-                
+          <div className="col-sm-3">
+            <div className="card">
+              <div className="card-body">
+                <center>  <h3>Daily ROI</h3>
+
+                  <h3>8%</h3>
+
                 </center>
-                </div>
               </div>
             </div>
+          </div>
 
 
-            <div className="col-sm-3">
-              <div className="card">
-                <div className="card-body">
-              <center>  <h3>Withdrawal Fee</h3>
-                
-                <h3>2%</h3>
-                
+          <div className="col-sm-3">
+            <div className="card">
+              <div className="card-body">
+                <center>  <h3>Withdrawal Fee</h3>
+
+                  <h3>2%</h3>
+
                 </center>
 
-                </div>
               </div>
             </div>
+          </div>
 
-            <div className="col-sm-3">
-              <div className="card">
-                <div className="card-body">
-              <center>  <h3>Deposit Fee</h3>
-                
-                <h4>Marketing 4% + Dev 2%</h4>
-                
+          <div className="col-sm-3">
+            <div className="card">
+              <div className="card-body">
+                <center>  <h3>Deposit Fee</h3>
+
+                  <h4>Marketing 4% + Dev 2%</h4>
+
                 </center>
-                </div>
               </div>
             </div>
+          </div>
 
         </div>
-          
-      </div> 
+
+      </div>
 
       <br /> <div className="container">
-      <div className="row">
-        <div className="col-sm-4">
-          <div className="card cardDino">
-          
-            <div className="card-body">
-            <h4><b>Investment Portal</b></h4>
-              <hr />
-            <table className="table">
-              <tbody>
-              <tr>
-                <td><h5><b>Wallet Balance</b></h5></td>
-                <td style={{textAlign:"right"}}><h5>{Number(userBalance / 10e17).toFixed(2)} BUSD</h5></td>
-              </tr>
+        <div className="row">
+          <div className="col-sm-4">
+            <div className="card cardDino">
 
-              <tr>
-                <td><h5><b>User Invested</b></h5></td>
-                <td style={{textAlign:"right"}}><h5>{Number(userInvestment).toFixed(2)} BUSD</h5></td>
-              </tr>
-
-              <tr>
-                <td><h5><b>Daily User ROI</b></h5></td>
-                <td style={{textAlign:"right"}}><h5>{Number(userDailyRoi).toFixed(2)} BUSD</h5></td>
-              </tr>
-              </tbody>
-            </table>
-          
-            <form onSubmit={deposit}>
+              <div className="card-body">
+                <h4><b>Investment Portal</b></h4>
+                <hr />
                 <table className="table">
                   <tbody>
-                <tr><td>  <input
-                      type="number"
-                      placeholder="50 BUSD"
-                      className="form-control"
-                      value={value}
-                      onChange={(e) => setValue(e.target.value)}
-                    />
-                </td>
+                    <tr>
+                      <td><h5><b>Wallet Balance</b></h5></td>
+                      <td style={{ textAlign: "right" }}><h5>{Number(userBalance / 10e17).toFixed(2)} BUSD</h5></td>
+                    </tr>
+
+                    <tr>
+                      <td><h5><b>User Invested</b></h5></td>
+                      <td style={{ textAlign: "right" }}><h5>{Number(userInvestment).toFixed(2)} BUSD</h5></td>
+                    </tr>
+
+                    <tr>
+                      <td><h5><b>Daily User ROI</b></h5></td>
+                      <td style={{ textAlign: "right" }}><h5>{Number(userDailyRoi).toFixed(2)} BUSD</h5></td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <form onSubmit={deposit}>
+                  <table className="table">
+                    <tbody>
+                      <tr><td>  <input
+                        type="number"
+                        placeholder="50 BUSD"
+                        className="form-control"
+                        value={value}
+                        onChange={(e) => setValue(e.target.value)}
+                      />
+                      </td>
 
 
-              
-              <td style={{textAlign:"right"}}>
-                  {allowance>0? <>
-                          <button className="btn btn-primary btn-lg" style={{background:"black",color:"#fff",border:"1px solid #fff"}}>DEPOSIT</button>
 
-                      </>
+                        <td style={{ textAlign: "right" }}>
+                          {allowance > 0 ? <>
+                            <button className="btn btn-primary btn-lg" style={{ background: "black", color: "#fff", border: "1px solid #fff" }}>DEPOSIT</button>
 
-                      :
+                          </>
 
-                      <>
-                          <button className="btn btn-primary btn-lg" style={{background:"black",color:"#fff",border:"1px solid #fff"}} onClick={approval}>APPROVE</button>
+                            :
+
+                            <>
+                              <button className="btn btn-primary btn-lg" style={{ background: "black", color: "#fff", border: "1px solid #fff" }} onClick={approval}>APPROVE</button>
 
 
-                      </>
+                            </>
 
-                  }
-              </td>
+                          }
+                        </td>
 
-            </tr>
-            </tbody>
-          </table>
-                    
-            </form>
-            
-          
-      
-          <table className="table table-borderless">
-            <tbody>
-            {/* <tr style={{borderBottom:"none"}}>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                </form>
+
+
+
+                <table className="table table-borderless">
+                  <tbody>
+                    {/* <tr style={{borderBottom:"none"}}>
               <td><h4>Unstake Funds</h4></td>
               
               <td style={{textAlign:"right"}}><button className="btn btn-primary btn-lg" style={{background:"black",color:"#fff",border:"1px solid #fff"}} onClick={unStake}>UNSTAKE</button></td>
             </tr> */}
 
-          </tbody>
-            </table>
-            </div>
-            </div>
-    
-          </div>
-
-        <div className="col-sm-4">
-          <div className="card cardDino">
-            <div className="card-body">
-              <h4><b>Statistics</b></h4>
-                <hr />
-              <table className="table">
-                <tbody>
-                  <tr>
-                    <td><h6><b>Available Withdrawal</b> <br />{Number(approvedWithdraw).toFixed(2)} BUSD</h6></td>
-                    <td style={{textAlign:"right"}}><button className="btn btn-primary btn-lg" style={{background:"black",color:"#fff",border:"1px solid #fff"}}  onClick={withDraw}>Withdraw</button></td>
-                  </tr>
-
-                  <tr>
-                    <td><h6><b>Last Withdrawal</b><br />{lastWithdraw}</h6></td>
-                    
-                    <td style={{textAlign:"right"}}><h6><b>Next Withdrawal</b><br />{nextWithdraw}</h6></td>
-                  </tr>
-          
-                  <tr style={{border:"none"}}>
-                    <td><h5>Total Withdrawn</h5></td>
-                    <td style={{textAlign:"right"}}><h5>{Number(totalWithdraw).toFixed(2)} BUSD</h5></td>
-                  </tr>
-
-                </tbody>
-              </table>
-              </div>
-          </div>
-        </div>
-
-        <div className="col-sm-4">
-          <div className="card">
-              <div className="card-body">
-              <h4><b>Referral Rewards  10%</b></h4>
-              <hr />
-                <table className="table">
-                  <tbody>
-                  <tr>
-                    <td><h5>BUSD Rewards</h5></td>
-                    <td style={{textAlign:"right"}}><h5>{refferalReward} BUSD</h5></td>
-                  </tr>
-                  <tr>
-                    <td><h5>Total Withdrawn</h5></td>
-                    <td style={{textAlign:"right"}}><h5>{refTotalWithdraw} BUSD</h5></td>
-                  </tr>
                   </tbody>
                 </table>
-                <center> <button className="btn btn-primary btn-lg" style={{background:"black",color:"#fff",border:"1px solid #fff"}} onClick={refWithdraw}>Withdraw Rewards</button> </center>
               </div>
+            </div>
+
           </div>
-          <br />
-          <div className="card">
-            <div className="card-body">
-              <h4><b>Referral Link</b></h4>
-              <hr />
-              <form>
-                Share your Referral Link To Earn 10% of BUSD 
-                <input type="text" value={refLink} className="form-control" />
-              </form>
+
+          <div className="col-sm-4">
+            <div className="card cardDino">
+              <div className="card-body">
+                <h4><b>Statistics</b></h4>
+                <hr />
+                <table className="table">
+                  <tbody>
+                    <tr>
+                      <td><h6><b>Daily Rewards</b> <br /> {Number(dailyReward).toFixed(2)}/{userDailyRoi} BUSD</h6></td>
+
+                      <td style={{ textAlign: "right" }}><button className="btn btn-primary btn-lg" style={{ background: "black", color: "#fff", border: "1px solid #fff" }} onClick={ClaimNow}>Claim</button></td>
+                    </tr>
+                    <tr>
+                      <td><h6><b>Last Claim</b><br />{startTime}</h6></td>
+
+                      <td style={{ textAlign: "right" }}><h6><b>Next Claim</b><br />{deadline}</h6></td>
+                    </tr>
+
+                    <tr>
+                      <td><h6><b>Available Withdrawal</b> <br />{Number(approvedWithdraw).toFixed(2)} BUSD</h6></td>
+                      <td style={{ textAlign: "right" }}><button className="btn btn-primary btn-lg" style={{ background: "black", color: "#fff", border: "1px solid #fff" }} onClick={withDraw}>Withdraw</button></td>
+                    </tr>
+
+                    <tr>
+                      <td><h6><b>Last Withdrawal</b><br />{lastWithdraw}</h6></td>
+
+                      <td style={{ textAlign: "right" }}><h6><b>Next Withdrawal</b><br />{nextWithdraw}</h6></td>
+                    </tr>
+
+                    <tr style={{ border: "none" }}>
+                      <td><h5>Total Withdrawn</h5></td>
+                      <td style={{ textAlign: "right" }}><h5>{Number(totalWithdraw).toFixed(2)} BUSD</h5></td>
+                    </tr>
+
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div className="col-sm-4">
+            <div className="card">
+              <div className="card-body">
+                <h4><b>Referral Rewards  10%</b></h4>
+                <hr />
+                <table className="table">
+                  <tbody>
+                    <tr>
+                      <td><h5>BUSD Rewards</h5></td>
+                      <td style={{ textAlign: "right" }}><h5>{refferalReward} BUSD</h5></td>
+                    </tr>
+                    <tr>
+                      <td><h5>Total Withdrawn</h5></td>
+                      <td style={{ textAlign: "right" }}><h5>{refTotalWithdraw} BUSD</h5></td>
+                    </tr>
+                  </tbody>
+                </table>
+                <center> <button className="btn btn-primary btn-lg" style={{ background: "black", color: "#fff", border: "1px solid #fff" }} onClick={refWithdraw}>Withdraw Rewards</button> </center>
+              </div>
+            </div>
+            <br />
+            <div className="card">
+              <div className="card-body">
+                <h4><b>Referral Link</b></h4>
+                <hr />
+                <form>
+                  Share your Referral Link To Earn 10% of BUSD
+                  <input type="text" value={refLink} className="form-control" />
+                </form>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <br />
+        <div className="row">
+          <div className="col-sm-12">
+            <div className="card">
+              <div className="card-header">
+                Investment Calculator
+              </div>
+
+              <div className="card-body">
+
+                <div className="row">
+                  <div className="col-sm-6">
+                    <h3>BUSD AMOUNT</h3>
+                    <input
+                      type="number"
+                      placeholder="50"
+                      className="form-control"
+                      value={calculate}
+                      onChange={(e) => setCalculator(e.target.value)}
+                    />
+                    <p>Amount of returns calculated on the basis of investment amount.
+                      <br />
+                      <b>Note:</b> Min investment is 50 BUSD & max amount of investment in 100k BUSD.</p>
+                  </div>
+                  <div className="col-sm-6" style={{ textAlign: "right" }}>
+                    <h3>Return of Investment</h3>
+                    <p>Daily Return: {calculate / 100 * 8} BUSD <br /> Weekly Return: {calculate / 100 * 8 * 7} BUSD  <br /> Monthly Return: {calculate / 100 * 8 * 30} BUSD </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      
-      </div>
 
-      <br />
-      <div className="row">
-            <div className="col-sm-12">
-              <div className="card">
-                <div className="card-header">
-                  Investment Calculator
-                </div>
-              
-                <div className="card-body">
-                
-                <div className="row">
-                  <div className="col-sm-6">
-                  <h3>BUSD AMOUNT</h3>
-                  <input
-                    type="number"
-                    placeholder="50"
-                    className="form-control"
-                    value={calculate}
-                    onChange={(e) => setCalculator(e.target.value)}
-                  />
-                  <p>Amount of returns calculated on the basis of investment amount. 
-<br />
-<b>Note:</b> Min investment is 50 BUSD & max amount of investment in 100k BUSD.</p>
-                  </div>
-                  <div className="col-sm-6" style={{textAlign:"right"}}>
-                    <h3>Return of Investment</h3>
-                  <p>Daily Return: {calculate / 100 * 8} BUSD <br /> Weekly Return: {calculate / 100 * 8 * 7} BUSD  <br /> Monthly Return: {calculate / 100 * 8 * 30} BUSD </p> 
-                    </div>
-                </div>
-              </div>
-            </div>
-          </div>
-      </div>
+        <br />
+        <center>
+          <h2>Join DinoBusd Lottery Now</h2>
+          <p>Feelin Lucky? </p>
+          <a href="https://lotto.dinobusd.finance"><button className="btn btn-primary btn-lg btnd" style={{ background: "black", color: "#f68f19", border: "1px solid #fff" }}>PLAY NOW</button></a>
+        </center>
 
-      <br />
-      <center>
-        <h2>Audit Partner</h2>
-          <a href="audit.pdf"><img src={audit} alt={audit} className="img-fluid" style={{width:"300px"}} /> </a>
-      </center>
+        <br />
+        <center>
+          <h2>Audit Partner</h2>
+          <a href="audit.pdf"><img src={audit} alt={audit} className="img-fluid" style={{ width: "300px" }} /> </a>
+        </center>
 
-      <br />
-      <center><h5> <a href="https://twitter.com/dinobusd" style={{color:"#f68f19",textDecoration:"none"}}><i class="fa fa-twitter"></i> Twitter </a> || <a href="https://t.me/DinoBusdOfficial"  style={{color:"#f68f19",textDecoration:"none"}}><i class="fa fa-telegram"></i> Telegram </a> || <a href="audit.pdf"   style={{color:"#f68f19",textDecoration:"none"}}><i class="fa fa-file-code-o"></i> Audit </a>|| <a href="https://bscscan.com/address/0xb9150107F2820930D997a91f03Ba81A8d625F337#code"  style={{color:"#f68f19",textDecoration:"none"}}><i class="fa fa-line-chart"></i> Bscscan </a></h5></center>
-          
-      <br />
+        <br />
+        <center><h5> <a href="https://twitter.com/dinobusd" style={{ color: "#f68f19", textDecoration: "none" }}><i class="fa fa-twitter"></i> Twitter </a> || <a href="https://t.me/DinoBusdOfficial" style={{ color: "#f68f19", textDecoration: "none" }}><i class="fa fa-telegram"></i> Telegram </a> || <a href="audit.pdf" style={{ color: "#f68f19", textDecoration: "none" }}><i class="fa fa-file-code-o"></i> Audit </a>|| <a href="https://bscscan.com/address/0xb9150107F2820930D997a91f03Ba81A8d625F337#code" style={{ color: "#f68f19", textDecoration: "none" }}><i class="fa fa-line-chart"></i> Bscscan </a></h5></center>
+
+        <br />
       </div>
-    </> 
-        
+    </>
+
   );
 }
 
