@@ -1,3 +1,7 @@
+/**
+ *Submitted for verification at BscScan.com on 2022-06-20
+ */
+
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.14;
 
@@ -334,13 +338,11 @@ abstract contract ReentrancyGuard {
     }
 }
 
-contract GeuBusd is Context, Ownable, ReentrancyGuard {
+contract GEUBusd is Context, Ownable, ReentrancyGuard {
     using SafeMath for uint256;
-    uint256 public constant min = 10 ether;
-    uint256 public constant max = 10000 ether;
-    uint256 public roi = 3;
-    uint256 public withdraw_penalty = 0.2;
-    uint256 public deposit_penalty = 0.1;
+    uint256 public constant min = 50 ether;
+    uint256 public constant max = 100000 ether;
+    uint256 public roi = 30;
     uint256 public constant fee = 6;
     uint256 public constant withdraw_fee = 2;
     uint256 public constant ref_fee = 10;
@@ -351,7 +353,7 @@ contract GeuBusd is Context, Ownable, ReentrancyGuard {
     bool public alreadyInvested = false;
 
     constructor() {
-        tokenAdress = 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56;
+        tokenAdress = 0x4614668d17d0FFD422d3edeD7Dd2E8A759Aa4011;
         BusdInterface = IERC20(tokenAdress);
     }
 
@@ -412,6 +414,7 @@ contract GeuBusd is Context, Ownable, ReentrancyGuard {
 
         if (!checkAlready()) {
             uint256 ref_fee_add = refFee(_amount);
+
             if (_ref != address(0) && _ref != msg.sender) {
                 uint256 ref_last_balance = refferal[_ref].reward;
                 uint256 totalRefFee = SafeMath.add(
@@ -441,14 +444,14 @@ contract GeuBusd is Context, Ownable, ReentrancyGuard {
             );
 
             // weekly withdraw
-            uint256 weeklyStart = block.timestamp;
-            uint256 deadline_weekly = block.timestamp + 7 days;
+            // uint256 weeklyStart = block.timestamp;
+            // uint256 deadline_weekly = block.timestamp + 7 days;
 
-            weekly[msg.sender] = weeklyWithdraw(
-                msg.sender,
-                weeklyStart,
-                deadline_weekly
-            );
+            // weekly[msg.sender] = weeklyWithdraw(
+            //     msg.sender,
+            //     weeklyStart,
+            //     deadline_weekly
+            // );
 
             // Claim Setting
             uint256 claimTimeStart = block.timestamp;
@@ -471,6 +474,7 @@ contract GeuBusd is Context, Ownable, ReentrancyGuard {
             );
         } else {
             uint256 ref_fee_add = refFee(_amount);
+            roi = SafeMath.add(roi, 1);
             if (_ref != address(0) && _ref != msg.sender) {
                 uint256 ref_last_balance = refferal[_ref].reward;
                 uint256 totalRefFee = SafeMath.add(
@@ -551,15 +555,17 @@ contract GeuBusd is Context, Ownable, ReentrancyGuard {
 
     function withdrawal() public noReentrant {
         require(init, "Not Started Yet");
-        require(
-            weekly[msg.sender].deadline <= block.timestamp,
-            "You cant withdraw"
-        );
+        // require(
+        //     weekly[msg.sender].deadline <= block.timestamp,
+        //     "You cant withdraw"
+        // );
         require(
             totalRewards[msg.sender].amount <=
                 SafeMath.mul(investments[msg.sender].invested, 5),
             "You cant withdraw you have collected five times Already"
         ); // hh new
+        roi = SafeMath.sub(roi, 2);
+        if (roi < 0) roi = 0;
         uint256 aval_withdraw = approvedWithdrawal[msg.sender].amount;
         uint256 aval_withdraw2 = SafeMath.div(aval_withdraw, 2); // divide the fees
         uint256 wFee = withdrawFee(aval_withdraw2); // changed from aval_withdraw
@@ -571,14 +577,14 @@ contract GeuBusd is Context, Ownable, ReentrancyGuard {
             aval_withdraw2
         ); // changed from 0 to half of the amount stay in in his contract
 
-        uint256 weeklyStart = block.timestamp;
-        uint256 deadline_weekly = block.timestamp + 7 days;
+        // uint256 weeklyStart = block.timestamp;
+        // uint256 deadline_weekly = block.timestamp + 7 days;
 
-        weekly[msg.sender] = weeklyWithdraw(
-            msg.sender,
-            weeklyStart,
-            deadline_weekly
-        );
+        // weekly[msg.sender] = weeklyWithdraw(
+        //     msg.sender,
+        //     weeklyStart,
+        //     deadline_weekly
+        // );
 
         uint256 amount = totalWithdraw[msg.sender].amount;
 
@@ -666,7 +672,7 @@ contract GeuBusd is Context, Ownable, ReentrancyGuard {
     // other functions
 
     function DailyRoi(uint256 _amount) public view returns (uint256) {
-        return SafeMath.div(SafeMath.mul(_amount, roi), 100);
+        return SafeMath.div(SafeMath.mul(_amount, roi), 1000);
     }
 
     function checkAlready() public view returns (bool) {

@@ -4,7 +4,7 @@ import Web3 from "web3";
 import getAbi from "../Abi";
 import getAbiBusd from "./../Abi/busd";
 import logo from "./../assets/logo.png";
-import audit from "./../assets/audit.png";
+// import audit from "./../assets/audit.png";
 import { CONTRACTADDR } from "../Abi";
 
 /* eslint-disable no-unused-vars */
@@ -22,12 +22,13 @@ const Interface = () => {
   const [current, setCurrent] = useState(null);
   const [connButtonText, setConnButtonText] = useState("CONNECT");
   const [refLink, setRefLink] = useState(
-    "https://dinobusd.finance/?ref=0x0000000000000000000000000000000000000000"
+    "https://zeustaking.finance/?ref=0x0000000000000000000000000000000000000000"
   );
   const [contractBalance, setContractBalance] = useState(0);
   const [userBalance, setUserBalance] = useState(0);
   const [userInvestment, setUserInvestment] = useState(0);
   const [userDailyRoi, setUserDailyRoi] = useState(0);
+  const [roi, setRoi] = useState(0);
   const [dailyReward, setDailyReward] = useState(0);
   const [startTime, setClaimStartTime] = useState(0);
   const [deadline, setClaimDeadline] = useState(0);
@@ -38,14 +39,14 @@ const Interface = () => {
   const [refferalReward, setRefferalReward] = useState(0);
   const [refTotalWithdraw, setRefTotalWithdraw] = useState(0);
   const [value, setValue] = useState('');
+  const [value1, setValue1] = useState('');
   const [balance, setBalance] = useState(0);
-
   const [pendingMessage, setPendingMessage] = useState('');
   const [allowance, setAllowance] = useState();
   const [calculate, setCalculator] = useState('');
 
 
-
+  // const DefaultLink = "0xc3a16eC67EDD28782B9F983b0e762a5B042e5744";
   const queryParams = new URLSearchParams(window.location.search);
   let DefaultLink = queryParams.get("ref");
 
@@ -105,13 +106,13 @@ const Interface = () => {
     // eslint-disable-next-line
   }, [setInjectedProvider]);
 
-  // useEffect(() => {
-  //   setInterval(() => {
-  //     setRefetch((prevRefetch) => {
-  //       return !prevRefetch;
-  //     });
-  //   }, 10000);
-  // }, []);
+  useEffect(() => {
+    setInterval(() => {
+      setRefetch((prevRefetch) => {
+        return !prevRefetch;
+      });
+    }, 10000);
+  }, []);
 
   useEffect(() => {
     if (web3Modal.cachedProvider) {
@@ -133,7 +134,7 @@ const Interface = () => {
         // now the referal link not showing
         const balance = await web3.eth.getBalance(current);
 
-        const refLink = "https://dinobusd.finance/?ref=" + current;
+        const refLink = "https://zeustaking.finance/?ref=" + current;
         setRefLink(refLink);
         setBalance(web3.utils.fromWei(balance));
       }
@@ -150,7 +151,7 @@ const Interface = () => {
     const AbiContract = async () => {
       if (!isConnected || !web3) return;
       const contractBalance = await Abi.methods.getBalance().call();
-      console.log(contractBalance)
+      // console.log(contractBalance)
       setContractBalance(contractBalance / 10e17);
     };
 
@@ -160,9 +161,8 @@ const Interface = () => {
 
   useEffect(() => {
     const Contract = async () => {
-      console.log(CONTRACTADDR, "dddddddd")
+
       if (isConnected && Abi) {
-        console.log(current);
 
         let userBalance = await AbiBusd.methods.balanceOf(current).call();
         setUserBalance(userBalance);
@@ -173,19 +173,16 @@ const Interface = () => {
         let dailyRoi = await Abi.methods.DailyRoi(userInvestment.invested).call();
         setUserDailyRoi(dailyRoi / 10e17);
 
-        let dailyReward = await Abi.methods.userReward(current).call();
-        setDailyReward(dailyReward / 10e17);
-
-
-
-
-
+        let roiValue = await Abi.methods.roi().call();
+        setRoi(roiValue / 10);
+        // let dailyReward = await Abi.methods.userReward(current).call();
+        // setDailyReward(dailyReward / 10e17);
       }
     };
 
     Contract();
     // eslint-disable-next-line
-  }, [refetch]);
+  }, [isConnected, refetch]);
 
   useEffect(() => {
     const Withdrawlconsole = async () => {
@@ -211,10 +208,6 @@ const Interface = () => {
           setClaimStartTime(_claimStart);
 
           setClaimDeadline(_claimEnd);
-
-
-
-
 
           let weekly = await Abi.methods.weekly(current).call();
           let _start = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).format(weekly.startTime + "000");
@@ -253,17 +246,15 @@ const Interface = () => {
     const approvalallowance = async () => {
       if (isConnected && AbiBusd) {
 
-        let _contract = CONTRACTADDR;
-        let _allowance = await AbiBusd.methods.allowance(current, _contract).call();
+        let _allowance = await AbiBusd.methods.allowance(current, CONTRACTADDR).call();
         setAllowance(_allowance);
-
-
+        console.log(_allowance, "allowance")
       }
     };
 
     approvalallowance();
-    // eslint-disable-next-line
-  }, [refetch]);
+
+  }, [isConnected, refetch]);
 
 
 
@@ -272,7 +263,6 @@ const Interface = () => {
   const ClaimNow = async (e) => {
     e.preventDefault();
     if (isConnected && Abi) {
-      console.log("success")
       setPendingMessage("Claiming Funds")
       await Abi.methods.claimDailyRewards().send({
         from: current,
@@ -287,7 +277,6 @@ const Interface = () => {
   const withDraw = async (e) => {
     e.preventDefault();
     if (isConnected && Abi) {
-      console.log("success")
       setPendingMessage("Withdrawing funds")
       await Abi.methods.withdrawal().send({
         from: current,
@@ -302,7 +291,6 @@ const Interface = () => {
   const refWithdraw = async (e) => {
     e.preventDefault();
     if (isConnected && Abi) {
-      console.log("success")
       setPendingMessage("Rewards withdrawing")
       await Abi.methods.Ref_Withdraw().send({
         from: current,
@@ -317,11 +305,11 @@ const Interface = () => {
   const approval = async (e) => {
     e.preventDefault();
     if (isConnected && AbiBusd) {
-      console.log("success")
       setPendingMessage("Approving Busd");
-      let contract = CONTRACTADDR;
-      let _amount = '99999999999999999999999999999999999';
-      await AbiBusd.methods.approve(contract, _amount).send({
+      let getAllowance = await AbiBusd.methods.allowance(current, CONTRACTADDR).call();
+      console.log(getAllowance);
+      let _amount = '100000000000000000000000000000000000';
+      await AbiBusd.methods.approve(CONTRACTADDR, _amount).send({
         from: current,
       });
       setPendingMessage("Approved Successfully");
@@ -339,26 +327,49 @@ const Interface = () => {
   const deposit = async (e) => {
     e.preventDefault();
     if (isConnected && Abi) {
-      console.log("success")
-      setPendingMessage("Deposit Pending...!")
-      let _value = web3.utils.toWei(value);
-      await Abi.methods.deposit(DefaultLink, _value).send({
-        from: current,
-      });
-      setPendingMessage("Successfully Deposited")
+      if (value > 0) {
+        setPendingMessage("Deposit Pending...!")
+        let _value = web3.utils.toWei(value);
+        await Abi.methods.deposit(DefaultLink, _value).send({
+          from: current,
+        });
+        setPendingMessage("Successfully Deposited")
+      } else {
+        console.log("Input value")
+      }
+
     }
     else {
       console.log("connect wallet");
     }
   };
 
+  const compound = async (e) => {
+    e.preventDefault();
+    if (isConnected && Abi) {
+
+      if (value1 > 0) {
+        setPendingMessage("Compound Pending...!")
+        let _value = web3.utils.toWei(value1);
+        await Abi.methods.deposit(DefaultLink, _value).send({
+          from: current,
+        });
+        setPendingMessage("Successfully Compounded")
+      } else {
+        console.log("Input value");
+      }
+
+    }
+    else {
+      console.log("connect wallet");
+    }
+  }
 
   return (
     <>
       <nav className="navbar navbar-expand-sm navbar-dark" style={{ background: "black" }}>
         <div className="container-fluid">
-          <a className="navbar-brand" href="https://dinobusd.finance"><img src={logo} alt="logo" className="img-fluid" style={{ width: "200px" }} /></a>
-
+          <a className="navbar-brand" href="https://zeustaking.finance"><img src={logo} alt="logo" className="img-fluid" style={{ width: "200px" }} /></a>
 
           <ul className="navbar-nav me-auto">
 
@@ -369,11 +380,7 @@ const Interface = () => {
               <a className="nav-link" href="audit.pdf">AUDIT</a>
             </li>
           </ul>
-
           <button className="btn btn-primary btn-lg btnd" style={{ background: "yellow", color: "black", border: "1px solid #fff" }} onClick={loadWeb3Modal}><i className="fas fa-wallet"></i> {connButtonText}</button>
-
-
-
         </div>
       </nav>
       <br />
@@ -412,7 +419,7 @@ const Interface = () => {
               <div className="card-body">
                 <center>  <h3>Daily ROI</h3>
 
-                  <h3>3%</h3>
+                  <h3>{roi}%</h3>
 
                 </center>
               </div>
@@ -510,7 +517,40 @@ const Interface = () => {
                   </table>
 
                 </form>
+                <form onSubmit={compound}>
+                  <table className="table">
+                    <tbody>
+                      <tr><td>  <input
+                        type="number"
+                        placeholder="50 BUSD"
+                        className="form-control"
+                        value={value1}
+                        onChange={(e) => setValue1(e.target.value)}
+                      />
+                      </td>
 
+                        <td style={{ textAlign: "right" }}>
+                          {allowance > 0 ? <>
+                            <button className="btn btn-primary btn-lg" style={{ background: "black", color: "#fff", border: "1px solid #fff" }}>COMPOUND</button>
+
+                          </>
+
+                            :
+
+                            <>
+                              <button className="btn btn-primary btn-lg" style={{ background: "black", color: "#fff", border: "1px solid #fff" }} onClick={approval}>APPROVE</button>
+
+
+                            </>
+
+                          }
+                        </td>
+
+                      </tr>
+                    </tbody>
+                  </table>
+
+                </form>
 
 
                 <table className="table table-borderless">
@@ -571,6 +611,17 @@ const Interface = () => {
           <div className="col-sm-4">
             <div className="card">
               <div className="card-body">
+                <h4><b>Referral Link</b></h4>
+                <hr />
+                <form>
+                  Share your Referral Link To Earn 10% of BUSD
+                  <input type="text" value={refLink} className="form-control" />
+                </form>
+              </div>
+            </div>
+            <br />
+            <div className="card">
+              <div className="card-body">
                 <h4><b>Referral Rewards  10%</b></h4>
                 <hr />
                 <table className="table">
@@ -586,17 +637,6 @@ const Interface = () => {
                   </tbody>
                 </table>
                 <center> <button className="btn btn-primary btn-lg" style={{ background: "black", color: "#fff", border: "1px solid #fff" }} onClick={refWithdraw}>Withdraw Rewards</button> </center>
-              </div>
-            </div>
-            <br />
-            <div className="card">
-              <div className="card-body">
-                <h4><b>Referral Link</b></h4>
-                <hr />
-                <form>
-                  Share your Referral Link To Earn 10% of BUSD
-                  <input type="text" value={refLink} className="form-control" />
-                </form>
               </div>
             </div>
           </div>
