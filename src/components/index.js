@@ -537,11 +537,7 @@ const Interface = () => {
 
                             :
 
-                            <>
-                              <button className="btn btn-primary btn-lg" style={{ background: "black", color: "#fff", border: "1px solid #fff" }} onClick={approval}>APPROVE</button>
-
-
-                            </>
+                            <><div style={{ marginLeft: "120px" }}></div></>
 
                           }
                         </td>
