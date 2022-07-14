@@ -36,7 +36,7 @@ const Interface = () => {
   const [lastWithdraw, setLastWithdraw] = useState(0);
   const [nextWithdraw, setNextWithdraw] = useState(0);
   const [totalWithdraw, setTotalWithdraw] = useState(0);
-  const [refferalReward, setRefferalReward] = useState(0);
+  const [referralReward, setReferralReward] = useState(0);
   const [refTotalWithdraw, setRefTotalWithdraw] = useState(0);
   const [value, setValue] = useState('');
   const [value1, setValue1] = useState('');
@@ -131,7 +131,7 @@ const Interface = () => {
   useEffect(() => {
     const refData = async () => {
       if (isConnected && web3) {
-        // now the referal link not showing
+        // now the referral link not showing
         const balance = await web3.eth.getBalance(current);
 
         const refLink = "https://zeustaking.finance/?ref=" + current;
@@ -170,13 +170,16 @@ const Interface = () => {
         let userInvestment = await Abi.methods.investments(current).call();
         setUserInvestment(userInvestment.invested / 10e17);
 
-        let dailyRoi = await Abi.methods.DailyRoi(userInvestment.invested).call();
+
+        let dailyRoi = await Abi.methods.getDailyRoi(userInvestment.invested, current).call();
         setUserDailyRoi(dailyRoi / 10e17);
 
-        let roiValue = await Abi.methods.roi().call();
+        let roiValue = await Abi.methods.getUserRoi(current).call();
         setRoi(roiValue / 10);
-        // let dailyReward = await Abi.methods.userReward(current).call();
-        // setDailyReward(dailyReward / 10e17);
+
+        let dailyReward = await Abi.methods.userReward(current).call();
+        setDailyReward(dailyReward / 10e17);
+        console.log(dailyReward)
       }
     };
 
@@ -228,8 +231,8 @@ const Interface = () => {
       if (isConnected && Abi) {
 
 
-        let refEarnedWithdraw = await Abi.methods.refferal(current).call();
-        setRefferalReward(refEarnedWithdraw.reward / 10e17);
+        let refEarnedWithdraw = await Abi.methods.referral(current).call();
+        setReferralReward(refEarnedWithdraw.reward / 10e17);
 
         let refTotalWithdraw = await Abi.methods.refTotalWithdraw(current).call();
         setRefTotalWithdraw(refTotalWithdraw.totalWithdraw / 10e17);
@@ -248,7 +251,7 @@ const Interface = () => {
 
         let _allowance = await AbiBusd.methods.allowance(current, CONTRACTADDR).call();
         setAllowance(_allowance);
-        console.log(_allowance, "allowance")
+
       }
     };
 
@@ -488,7 +491,7 @@ const Interface = () => {
                     <tbody>
                       <tr><td>  <input
                         type="number"
-                        placeholder="50 BUSD"
+                        placeholder="10 BUSD"
                         className="form-control"
                         value={value}
                         onChange={(e) => setValue(e.target.value)}
@@ -522,7 +525,7 @@ const Interface = () => {
                     <tbody>
                       <tr><td>  <input
                         type="number"
-                        placeholder="50 BUSD"
+                        placeholder="10 BUSD"
                         className="form-control"
                         value={value1}
                         onChange={(e) => setValue1(e.target.value)}
@@ -572,26 +575,28 @@ const Interface = () => {
                 <table className="table">
                   <tbody>
                     <tr>
-                      <td><h6><b>Daily Rewards</b> <br /> {Number(dailyReward).toFixed(2)}/{userDailyRoi} BUSD</h6></td>
+                      <td style={{ textAlign: "center" }} colSpan="2">
+                        <h6><b>Daily Rewards</b> <br /> {Number(dailyReward).toFixed(2)}/{userDailyRoi} BUSD</h6>
+                      </td>
 
-                      <td style={{ textAlign: "right" }}><button className="btn btn-primary btn-lg" style={{ background: "black", color: "#fff", border: "1px solid #fff" }} onClick={ClaimNow}>Claim</button></td>
+                      {/* <td style={{ textAlign: "right" }}><button className="btn btn-primary btn-lg" style={{ background: "black", color: "#fff", border: "1px solid #fff" }} onClick={ClaimNow}>Claim</button></td> */}
                     </tr>
-                    <tr>
+                    {/* <tr>
                       <td><h6><b>Last Claim</b><br />{startTime}</h6></td>
 
                       <td style={{ textAlign: "right" }}><h6><b>Next Claim</b><br />{deadline}</h6></td>
-                    </tr>
+                    </tr> */}
 
                     <tr>
-                      <td><h6><b>Available Withdrawal</b> <br />{Number(approvedWithdraw).toFixed(2)} BUSD</h6></td>
-                      <td style={{ textAlign: "right" }}><button className="btn btn-primary btn-lg" style={{ background: "black", color: "#fff", border: "1px solid #fff" }} onClick={withDraw}>Withdraw</button></td>
+                      {/* <td><h6><b>Available Withdrawal</b> <br />{Number(approvedWithdraw).toFixed(2)} BUSD</h6></td> */}
+                      <td style={{ textAlign: "center" }} colSpan="2"><button className="btn btn-primary btn-lg" style={{ background: "black", color: "#fff", border: "1px solid #fff" }} onClick={withDraw}>Withdraw</button></td>
                     </tr>
 
-                    <tr>
+                    {/* <tr>
                       <td><h6><b>Last Withdrawal</b><br />{lastWithdraw}</h6></td>
 
                       <td style={{ textAlign: "right" }}><h6><b>Next Withdrawal</b><br />{nextWithdraw}</h6></td>
-                    </tr>
+                    </tr> */}
 
                     <tr style={{ border: "none" }}>
                       <td><h5>Total Withdrawn</h5></td>
@@ -606,7 +611,7 @@ const Interface = () => {
 
           <div className="col-sm-4">
             <div className="card">
-              <div className="card-body">
+              <div className="card-body" style={{ marginBottom: "27px" }}>
                 <h4><b>Referral Link</b></h4>
                 <hr />
                 <form>
@@ -624,7 +629,7 @@ const Interface = () => {
                   <tbody>
                     <tr>
                       <td><h5>BUSD Rewards</h5></td>
-                      <td style={{ textAlign: "right" }}><h5>{refferalReward} BUSD</h5></td>
+                      <td style={{ textAlign: "right" }}><h5>{referralReward} BUSD</h5></td>
                     </tr>
                     <tr>
                       <td><h5>Total Withdrawn</h5></td>
@@ -654,18 +659,18 @@ const Interface = () => {
                     <h3>BUSD AMOUNT</h3>
                     <input
                       type="number"
-                      placeholder="50"
+                      placeholder="10"
                       className="form-control"
                       value={calculate}
                       onChange={(e) => setCalculator(e.target.value)}
                     />
                     <p>Amount of returns calculated on the basis of investment amount.
                       <br />
-                      <b>Note:</b> Min investment is 50 BUSD & max amount of investment in 100k BUSD.</p>
+                      <b>Note:</b> Min investment is 10 BUSD & max amount of investment in 10k BUSD.</p>
                   </div>
                   <div className="col-sm-6" style={{ textAlign: "right" }}>
                     <h3>Return of Investment</h3>
-                    <p>Daily Return: {calculate / 100 * 8} BUSD <br /> Weekly Return: {calculate / 100 * 8 * 7} BUSD  <br /> Monthly Return: {calculate / 100 * 8 * 30} BUSD </p>
+                    <p>Daily Return: {calculate / 100 * roi} BUSD <br /> Weekly Return: {calculate / 100 * roi * 7} BUSD  <br /> Monthly Return: {calculate / 100 * roi * 30} BUSD </p>
                   </div>
                 </div>
               </div>

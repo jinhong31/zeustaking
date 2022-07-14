@@ -338,15 +338,17 @@ abstract contract ReentrancyGuard {
     }
 }
 
-contract GEUBusd is Context, Ownable, ReentrancyGuard {
+contract ZEUBusd is Context, Ownable, ReentrancyGuard {
     using SafeMath for uint256;
-    uint256 public constant min = 50 ether;
-    uint256 public constant max = 100000 ether;
-    uint256 public roi = 30;
-    uint256 public constant fee = 6;
+    uint256 public constant min = 10 ether;
+    uint256 public constant max = 10000 ether;
+    // uint256 public roi = 30;
+    uint256 public constant deposit_fee = 6;
     uint256 public constant withdraw_fee = 2;
     uint256 public constant ref_fee = 10;
     address public dev = 0x66294C989937Eb7171C3A1790957f36979CF03D5;
+    address public deposit_addr = 0x66294C989937Eb7171C3A1790957f36979CF03D5;
+    address public withdraw_addr = 0x66294C989937Eb7171C3A1790957f36979CF03D5;
     IERC20 private BusdInterface;
     address public tokenAdress;
     bool public init = false;
@@ -357,12 +359,12 @@ contract GEUBusd is Context, Ownable, ReentrancyGuard {
         BusdInterface = IERC20(tokenAdress);
     }
 
-    struct refferal_system {
+    struct referral_system {
         address ref_address;
         uint256 reward;
     }
 
-    struct refferal_withdraw {
+    struct referral_withdraw {
         address ref_address;
         uint256 totalWithdraw;
     }
@@ -397,15 +399,15 @@ contract GEUBusd is Context, Ownable, ReentrancyGuard {
         address user_address;
         uint256 amount;
     }
-
-    mapping(address => refferal_system) public refferal;
+    mapping(address => uint256) public roi;
+    mapping(address => referral_system) public referral;
     mapping(address => user_investment_details) public investments;
     mapping(address => weeklyWithdraw) public weekly;
     mapping(address => claimDaily) public claimTime;
     mapping(address => userWithdrawal) public approvedWithdrawal;
     mapping(address => userTotalWithdraw) public totalWithdraw;
     mapping(address => userTotalRewards) public totalRewards;
-    mapping(address => refferal_withdraw) public refTotalWithdraw;
+    mapping(address => referral_withdraw) public refTotalWithdraw;
 
     // invest function
     function deposit(address _ref, uint256 _amount) public noReentrant {
@@ -414,21 +416,21 @@ contract GEUBusd is Context, Ownable, ReentrancyGuard {
 
         if (!checkAlready()) {
             uint256 ref_fee_add = refFee(_amount);
-
+            roi[msg.sender] = 30;
             if (_ref != address(0) && _ref != msg.sender) {
-                uint256 ref_last_balance = refferal[_ref].reward;
+                uint256 ref_last_balance = referral[_ref].reward;
                 uint256 totalRefFee = SafeMath.add(
                     ref_fee_add,
                     ref_last_balance
                 );
-                refferal[_ref] = refferal_system(_ref, totalRefFee);
+                referral[_ref] = referral_system(_ref, totalRefFee);
             } else {
-                uint256 ref_last_balance = refferal[dev].reward;
+                uint256 ref_last_balance = referral[dev].reward;
                 uint256 totalRefFee = SafeMath.add(
                     ref_fee_add,
                     ref_last_balance
                 );
-                refferal[dev] = refferal_system(dev, totalRefFee);
+                referral[dev] = referral_system(dev, totalRefFee);
             }
 
             // investment details
@@ -466,7 +468,7 @@ contract GEUBusd is Context, Ownable, ReentrancyGuard {
             // fees
             uint256 total_fee = depositFee(_amount);
             uint256 total_contract = SafeMath.sub(_amount, total_fee);
-            BusdInterface.transferFrom(msg.sender, dev, total_fee);
+            BusdInterface.transferFrom(msg.sender, deposit_addr, total_fee);
             BusdInterface.transferFrom(
                 msg.sender,
                 address(this),
@@ -474,21 +476,27 @@ contract GEUBusd is Context, Ownable, ReentrancyGuard {
             );
         } else {
             uint256 ref_fee_add = refFee(_amount);
-            roi = SafeMath.add(roi, 1);
+            if (
+                _amount >
+                getDailyRoi(investments[msg.sender].invested, msg.sender)
+            ) {
+                roi[msg.sender] = SafeMath.add(roi[msg.sender], 1);
+            }
+
             if (_ref != address(0) && _ref != msg.sender) {
-                uint256 ref_last_balance = refferal[_ref].reward;
+                uint256 ref_last_balance = referral[_ref].reward;
                 uint256 totalRefFee = SafeMath.add(
                     ref_fee_add,
                     ref_last_balance
                 );
-                refferal[_ref] = refferal_system(_ref, totalRefFee);
+                referral[_ref] = referral_system(_ref, totalRefFee);
             } else {
-                uint256 ref_last_balance = refferal[dev].reward;
+                uint256 ref_last_balance = referral[dev].reward;
                 uint256 totalRefFee = SafeMath.add(
                     ref_fee_add,
                     ref_last_balance
                 );
-                refferal[dev] = refferal_system(dev, totalRefFee);
+                referral[dev] = referral_system(dev, totalRefFee);
             }
 
             // investment details
@@ -518,7 +526,7 @@ contract GEUBusd is Context, Ownable, ReentrancyGuard {
             // fees
             uint256 total_fee = depositFee(_amount);
             uint256 total_contract = SafeMath.sub(_amount, total_fee);
-            BusdInterface.transferFrom(msg.sender, dev, total_fee);
+            BusdInterface.transferFrom(msg.sender, deposit_addr, total_fee);
             BusdInterface.transferFrom(
                 msg.sender,
                 address(this),
@@ -529,18 +537,16 @@ contract GEUBusd is Context, Ownable, ReentrancyGuard {
 
     function userReward(address _userAddress) public view returns (uint256) {
         uint256 userInvestment = investments[_userAddress].invested;
-        uint256 userDailyReturn = DailyRoi(userInvestment);
+        uint256 userDailyReturn = getDailyRoi(userInvestment, msg.sender);
 
         // invested time
 
         uint256 claimInvestTime = claimTime[_userAddress].startTime;
         uint256 claimInvestEnd = claimTime[_userAddress].deadline;
-
-        uint256 totalTime = SafeMath.sub(claimInvestEnd, claimInvestTime);
-
-        uint256 value = SafeMath.div(userDailyReturn, totalTime);
-
         uint256 nowTime = block.timestamp;
+        // uint256 totalTime = SafeMath.sub(claimInvestEnd, claimInvestTime);
+
+        uint256 value = SafeMath.div(userDailyReturn, 1 days);
 
         if (claimInvestEnd >= nowTime) {
             uint256 earned = SafeMath.sub(nowTime, claimInvestTime);
@@ -559,23 +565,49 @@ contract GEUBusd is Context, Ownable, ReentrancyGuard {
         //     weekly[msg.sender].deadline <= block.timestamp,
         //     "You cant withdraw"
         // );
-        require(
-            totalRewards[msg.sender].amount <=
-                SafeMath.mul(investments[msg.sender].invested, 5),
-            "You cant withdraw you have collected five times Already"
-        ); // hh new
-        roi = SafeMath.sub(roi, 2);
-        if (roi < 0) roi = 0;
-        uint256 aval_withdraw = approvedWithdrawal[msg.sender].amount;
-        uint256 aval_withdraw2 = SafeMath.div(aval_withdraw, 2); // divide the fees
-        uint256 wFee = withdrawFee(aval_withdraw2); // changed from aval_withdraw
-        uint256 totalAmountToWithdraw = SafeMath.sub(aval_withdraw2, wFee); // changed from aval_withdraw to aval_withdraw2
-        BusdInterface.transfer(msg.sender, totalAmountToWithdraw);
-        BusdInterface.transfer(dev, wFee);
-        approvedWithdrawal[msg.sender] = userWithdrawal(
+        // require(
+        //     totalRewards[msg.sender].amount <=
+        //         SafeMath.mul(investments[msg.sender].invested, 5),
+        //     "You cant withdraw you have collected five times Already"
+        // ); // hh new
+        uint256 rewards = userReward(msg.sender);
+        if (
+            rewards > getDailyRoi(investments[msg.sender].invested, msg.sender)
+        ) {
+            rewards = getDailyRoi(investments[msg.sender].invested, msg.sender);
+        }
+        // uint256 currentApproved = approvedWithdrawal[msg.sender].amount;
+
+        // uint256 value = SafeMath.add(rewards, currentApproved);
+
+        // approvedWithdrawal[msg.sender] = userWithdrawal(msg.sender, value);
+        // uint256 amount = totalRewards[msg.sender].amount; //hhnew
+        // uint256 totalRewardAmount = SafeMath.add(amount, rewards); //hhnew
+        // totalRewards[msg.sender].amount = totalRewardAmount;
+
+        uint256 claimTimeStart = block.timestamp;
+        uint256 claimTimeEnd = block.timestamp + 1 days;
+
+        claimTime[msg.sender] = claimDaily(
             msg.sender,
-            aval_withdraw2
-        ); // changed from 0 to half of the amount stay in in his contract
+            claimTimeStart,
+            claimTimeEnd
+        );
+
+        roi[msg.sender] = SafeMath.sub(roi[msg.sender], 2);
+        if (roi[msg.sender] < 0) roi[msg.sender] = 0;
+        // uint256 aval_withdraw = approvedWithdrawal[msg.sender].amount;
+        // uint256 aval_withdraw2 = SafeMath.div(aval_withdraw, 2); // divide the fees
+        // uint256 wFee = withdrawFee(aval_withdraw2); // changed from aval_withdraw
+        uint256 wFee = withdrawFee(rewards);
+        // uint256 totalAmountToWithdraw = SafeMath.sub(aval_withdraw2, wFee);
+        uint256 totalAmountToWithdraw = SafeMath.sub(rewards, wFee);
+        BusdInterface.transfer(msg.sender, totalAmountToWithdraw);
+        BusdInterface.transfer(withdraw_addr, wFee);
+        // approvedWithdrawal[msg.sender] = userWithdrawal(
+        //     msg.sender,
+        //     aval_withdraw2
+        // );
 
         // uint256 weeklyStart = block.timestamp;
         // uint256 deadline_weekly = block.timestamp + 7 days;
@@ -588,76 +620,76 @@ contract GEUBusd is Context, Ownable, ReentrancyGuard {
 
         uint256 amount = totalWithdraw[msg.sender].amount;
 
-        uint256 totalAmount = SafeMath.add(amount, aval_withdraw2); // it will add one of his half to total withdraw
+        uint256 totalAmount = SafeMath.add(amount, totalAmountToWithdraw); // it will add one of his half to total withdraw
 
         totalWithdraw[msg.sender] = userTotalWithdraw(msg.sender, totalAmount);
     }
 
-    function claimDailyRewards() public noReentrant {
-        require(init, "Not Started Yet");
-        require(
-            claimTime[msg.sender].deadline <= block.timestamp,
-            "You cant claim"
-        );
+    // function claimDailyRewards() public noReentrant {
+    //     require(init, "Not Started Yet");
+    //     require(
+    //         claimTime[msg.sender].deadline <= block.timestamp,
+    //         "You cant claim"
+    //     );
 
-        uint256 rewards = userReward(msg.sender);
+    //     uint256 rewards = userReward(msg.sender);
 
-        uint256 currentApproved = approvedWithdrawal[msg.sender].amount;
+    //     uint256 currentApproved = approvedWithdrawal[msg.sender].amount;
 
-        uint256 value = SafeMath.add(rewards, currentApproved);
+    //     uint256 value = SafeMath.add(rewards, currentApproved);
 
-        approvedWithdrawal[msg.sender] = userWithdrawal(msg.sender, value);
-        uint256 amount = totalRewards[msg.sender].amount; //hhnew
-        uint256 totalRewardAmount = SafeMath.add(amount, rewards); //hhnew
-        totalRewards[msg.sender].amount = totalRewardAmount;
+    //     approvedWithdrawal[msg.sender] = userWithdrawal(msg.sender, value);
+    //     uint256 amount = totalRewards[msg.sender].amount; //hhnew
+    //     uint256 totalRewardAmount = SafeMath.add(amount, rewards); //hhnew
+    //     totalRewards[msg.sender].amount = totalRewardAmount;
 
-        uint256 claimTimeStart = block.timestamp;
-        uint256 claimTimeEnd = block.timestamp + 1 days;
+    //     uint256 claimTimeStart = block.timestamp;
+    //     uint256 claimTimeEnd = block.timestamp + 1 days;
 
-        claimTime[msg.sender] = claimDaily(
-            msg.sender,
-            claimTimeStart,
-            claimTimeEnd
-        );
-    }
+    //     claimTime[msg.sender] = claimDaily(
+    //         msg.sender,
+    //         claimTimeStart,
+    //         claimTimeEnd
+    //     );
+    // }
 
-    function unStake() external noReentrant {
-        require(init, "Not Started Yet");
-        uint256 I_investment = investments[msg.sender].invested;
-        uint256 t_withdraw = totalWithdraw[msg.sender].amount;
+    // function unStake() external noReentrant {
+    //     require(init, "Not Started Yet");
+    //     uint256 I_investment = investments[msg.sender].invested;
+    //     uint256 t_withdraw = totalWithdraw[msg.sender].amount;
 
-        require(
-            I_investment > t_withdraw,
-            "You already withdraw a lot than your investment"
-        );
-        uint256 lastFee = depositFee(I_investment);
-        uint256 currentBalance = SafeMath.sub(I_investment, lastFee);
+    //     require(
+    //         I_investment > t_withdraw,
+    //         "You already withdraw a lot than your investment"
+    //     );
+    //     uint256 lastFee = depositFee(I_investment);
+    //     uint256 currentBalance = SafeMath.sub(I_investment, lastFee);
 
-        uint256 UnstakeValue = SafeMath.sub(currentBalance, t_withdraw);
+    //     uint256 UnstakeValue = SafeMath.sub(currentBalance, t_withdraw);
 
-        uint256 UnstakeValueCore = SafeMath.div(UnstakeValue, 2);
+    //     uint256 UnstakeValueCore = SafeMath.div(UnstakeValue, 2);
 
-        BusdInterface.transfer(msg.sender, UnstakeValueCore);
+    //     BusdInterface.transfer(msg.sender, UnstakeValueCore);
 
-        BusdInterface.transfer(dev, UnstakeValueCore);
+    //     BusdInterface.transfer(withdraw_addr, UnstakeValueCore);
 
-        investments[msg.sender] = user_investment_details(msg.sender, 0);
+    //     investments[msg.sender] = user_investment_details(msg.sender, 0);
 
-        approvedWithdrawal[msg.sender] = userWithdrawal(msg.sender, 0);
-    }
+    //     approvedWithdrawal[msg.sender] = userWithdrawal(msg.sender, 0);
+    // }
 
     function Ref_Withdraw() external noReentrant {
         require(init, "Not Started Yet");
-        uint256 value = refferal[msg.sender].reward;
+        uint256 value = referral[msg.sender].reward;
 
         BusdInterface.transfer(msg.sender, value);
-        refferal[msg.sender] = refferal_system(msg.sender, 0);
+        referral[msg.sender] = referral_system(msg.sender, 0);
 
         uint256 lastWithdraw = refTotalWithdraw[msg.sender].totalWithdraw;
 
         uint256 totalValue = SafeMath.add(value, lastWithdraw);
 
-        refTotalWithdraw[msg.sender] = refferal_withdraw(
+        refTotalWithdraw[msg.sender] = referral_withdraw(
             msg.sender,
             totalValue
         );
@@ -671,8 +703,20 @@ contract GEUBusd is Context, Ownable, ReentrancyGuard {
 
     // other functions
 
-    function DailyRoi(uint256 _amount) public view returns (uint256) {
-        return SafeMath.div(SafeMath.mul(_amount, roi), 1000);
+    function getDailyRoi(uint256 _amount, address _user)
+        public
+        view
+        returns (uint256)
+    {
+        return SafeMath.div(SafeMath.mul(_amount, roi[_user]), 1000);
+    }
+
+    function getUserRoi(address _user) public view returns (uint256) {
+        if (roi[_user] == 0) {
+            return 30;
+        } else {
+            return roi[_user];
+        }
     }
 
     function checkAlready() public view returns (bool) {
@@ -685,7 +729,7 @@ contract GEUBusd is Context, Ownable, ReentrancyGuard {
     }
 
     function depositFee(uint256 _amount) public pure returns (uint256) {
-        return SafeMath.div(SafeMath.mul(_amount, fee), 100);
+        return SafeMath.div(SafeMath.mul(_amount, deposit_fee), 100);
     }
 
     function refFee(uint256 _amount) public pure returns (uint256) {
