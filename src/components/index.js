@@ -28,7 +28,7 @@ const Interface = () => {
   const [userBalance, setUserBalance] = useState(0);
   const [userInvestment, setUserInvestment] = useState(0);
   const [userDailyRoi, setUserDailyRoi] = useState(0);
-  const [roi, setRoi] = useState(0);
+  const [roi, setRoi] = useState(3);
   const [dailyReward, setDailyReward] = useState(0);
   const [startTime, setClaimStartTime] = useState(0);
   const [deadline, setClaimDeadline] = useState(0);
@@ -351,7 +351,7 @@ const Interface = () => {
 
   const compound = async (e) => {
     e.preventDefault();
-    console.log(currentWithdraw, "ddddddddddddddddddddddd")
+    // console.log(currentWithdraw, "ddddddddddddddddddddddd")
     if (isConnected && Abi) {
 
       if (currentWithdraw > 0) {
