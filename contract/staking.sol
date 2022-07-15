@@ -400,6 +400,7 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
         uint256 amount;
     }
     mapping(address => uint256) public roi;
+    mapping(address => uint256) public currentWithdraw;
     mapping(address => referral_system) public referral;
     mapping(address => user_investment_details) public investments;
     mapping(address => weeklyWithdraw) public weekly;
@@ -477,7 +478,7 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
         } else {
             uint256 ref_fee_add = refFee(_amount);
             if (
-                _amount >
+                _amount >=
                 getDailyRoi(investments[msg.sender].invested, msg.sender)
             ) {
                 roi[msg.sender] = SafeMath.add(roi[msg.sender], 1);
@@ -537,26 +538,30 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
 
     function userReward(address _userAddress) public view returns (uint256) {
         uint256 userInvestment = investments[_userAddress].invested;
-        uint256 userDailyReturn = getDailyRoi(userInvestment, msg.sender);
+        uint256 userDailyReturn = getDailyRoi(userInvestment, _userAddress);
 
         // invested time
 
         uint256 claimInvestTime = claimTime[_userAddress].startTime;
-        uint256 claimInvestEnd = claimTime[_userAddress].deadline;
+        // uint256 claimInvestEnd = claimTime[_userAddress].deadline;
         uint256 nowTime = block.timestamp;
         // uint256 totalTime = SafeMath.sub(claimInvestEnd, claimInvestTime);
 
         uint256 value = SafeMath.div(userDailyReturn, 1 days);
 
-        if (claimInvestEnd >= nowTime) {
-            uint256 earned = SafeMath.sub(nowTime, claimInvestTime);
+        uint256 earned = SafeMath.sub(nowTime, claimInvestTime);
 
-            uint256 totalEarned = SafeMath.mul(earned, value);
-
-            return totalEarned;
-        } else {
-            return userDailyReturn;
+        uint256 totalEarned = SafeMath.mul(earned, value);
+        if (
+            totalEarned >
+            getDailyRoi(investments[_userAddress].invested, _userAddress)
+        ) {
+            totalEarned = getDailyRoi(
+                investments[_userAddress].invested,
+                _userAddress
+            );
         }
+        return totalEarned;
     }
 
     function withdrawal() public noReentrant {
@@ -571,11 +576,7 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
         //     "You cant withdraw you have collected five times Already"
         // ); // hh new
         uint256 rewards = userReward(msg.sender);
-        if (
-            rewards > getDailyRoi(investments[msg.sender].invested, msg.sender)
-        ) {
-            rewards = getDailyRoi(investments[msg.sender].invested, msg.sender);
-        }
+
         // uint256 currentApproved = approvedWithdrawal[msg.sender].amount;
 
         // uint256 value = SafeMath.add(rewards, currentApproved);
@@ -621,7 +622,7 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
         uint256 amount = totalWithdraw[msg.sender].amount;
 
         uint256 totalAmount = SafeMath.add(amount, totalAmountToWithdraw); // it will add one of his half to total withdraw
-
+        currentWithdraw[msg.sender] = totalAmountToWithdraw;
         totalWithdraw[msg.sender] = userTotalWithdraw(msg.sender, totalAmount);
     }
 

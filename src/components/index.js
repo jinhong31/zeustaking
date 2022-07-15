@@ -36,6 +36,7 @@ const Interface = () => {
   const [lastWithdraw, setLastWithdraw] = useState(0);
   const [nextWithdraw, setNextWithdraw] = useState(0);
   const [totalWithdraw, setTotalWithdraw] = useState(0);
+  const [currentWithdraw, setCurrentWithdraw] = useState(0);
   const [referralReward, setReferralReward] = useState(0);
   const [refTotalWithdraw, setRefTotalWithdraw] = useState(0);
   const [value, setValue] = useState('');
@@ -45,8 +46,6 @@ const Interface = () => {
   const [allowance, setAllowance] = useState();
   const [calculate, setCalculator] = useState('');
 
-
-  // const DefaultLink = "0xc3a16eC67EDD28782B9F983b0e762a5B042e5744";
   const queryParams = new URLSearchParams(window.location.search);
   let DefaultLink = queryParams.get("ref");
 
@@ -195,11 +194,14 @@ const Interface = () => {
 
         let totalWithdraw = await Abi.methods.totalWithdraw(current).call();
         setTotalWithdraw(totalWithdraw.amount / 10e17);
+
+        let currentWithdraw = await Abi.methods.currentWithdraw(current).call();
+        setCurrentWithdraw(currentWithdraw / 10e17);
       }
     }
     Withdrawlconsole();
     // eslint-disable-next-line
-  }, [refetch]);
+  }, [isConnected, refetch]);
 
   useEffect(() => {
     const TimeLine = async () => {
@@ -349,11 +351,12 @@ const Interface = () => {
 
   const compound = async (e) => {
     e.preventDefault();
+    console.log(currentWithdraw, "ddddddddddddddddddddddd")
     if (isConnected && Abi) {
 
-      if (value1 > 0) {
+      if (currentWithdraw > 0) {
         setPendingMessage("Compound Pending...!")
-        let _value = web3.utils.toWei(value1);
+        let _value = web3.utils.toWei(Number(currentWithdraw + 0.1).toFixed(2));
         await Abi.methods.deposit(DefaultLink, _value).send({
           from: current,
         });
@@ -361,7 +364,6 @@ const Interface = () => {
       } else {
         console.log("Input value");
       }
-
     }
     else {
       console.log("connect wallet");
@@ -499,19 +501,14 @@ const Interface = () => {
                       </td>
 
                         <td style={{ textAlign: "right" }}>
-                          {allowance > 0 ? <>
-                            <button className="btn btn-primary btn-lg" style={{ background: "black", color: "#fff", border: "1px solid #fff" }}>DEPOSIT</button>
-
-                          </>
-
+                          {allowance > 0 ?
+                            <>
+                              <button className="btn btn-primary btn-lg" style={{ background: "black", color: "#fff", border: "1px solid #fff" }}>DEPOSIT</button>
+                            </>
                             :
-
                             <>
                               <button className="btn btn-primary btn-lg" style={{ background: "black", color: "#fff", border: "1px solid #fff" }} onClick={approval}>APPROVE</button>
-
-
                             </>
-
                           }
                         </td>
 
@@ -520,36 +517,7 @@ const Interface = () => {
                   </table>
 
                 </form>
-                <form onSubmit={compound}>
-                  <table className="table">
-                    <tbody>
-                      <tr><td>  <input
-                        type="number"
-                        placeholder="10 BUSD"
-                        className="form-control"
-                        value={value1}
-                        onChange={(e) => setValue1(e.target.value)}
-                      />
-                      </td>
 
-                        <td style={{ textAlign: "right" }}>
-                          {allowance > 0 ? <>
-                            <button className="btn btn-primary btn-lg" style={{ background: "black", color: "#fff", border: "1px solid #fff" }}>COMPOUND</button>
-
-                          </>
-
-                            :
-
-                            <><div style={{ marginLeft: "120px" }}></div></>
-
-                          }
-                        </td>
-
-                      </tr>
-                    </tbody>
-                  </table>
-
-                </form>
 
 
                 <table className="table table-borderless">
@@ -576,7 +544,8 @@ const Interface = () => {
                   <tbody>
                     <tr>
                       <td style={{ textAlign: "center" }} colSpan="2">
-                        <h6><b>Daily Rewards</b> <br /> {Number(dailyReward).toFixed(2)}/{userDailyRoi} BUSD</h6>
+                        <h6><b>Available Withdrawal</b> <br />{Number(dailyReward).toFixed(2)} BUSD</h6>
+                        {/* <h6><b>Daily Rewards</b> <br /> {Number(dailyReward).toFixed(2)}/{userDailyRoi} BUSD</h6> */}
                       </td>
 
                       {/* <td style={{ textAlign: "right" }}><button className="btn btn-primary btn-lg" style={{ background: "black", color: "#fff", border: "1px solid #fff" }} onClick={ClaimNow}>Claim</button></td> */}
@@ -588,8 +557,9 @@ const Interface = () => {
                     </tr> */}
 
                     <tr>
-                      {/* <td><h6><b>Available Withdrawal</b> <br />{Number(approvedWithdraw).toFixed(2)} BUSD</h6></td> */}
-                      <td style={{ textAlign: "center" }} colSpan="2"><button className="btn btn-primary btn-lg" style={{ background: "black", color: "#fff", border: "1px solid #fff" }} onClick={withDraw}>Withdraw</button></td>
+
+                      <td style={{ textAlign: "center" }} ><button className="btn btn-primary btn-lg" style={{ background: "black", color: "#fff", border: "1px solid #fff" }} onClick={withDraw}>Withdraw</button></td>
+                      <td><button className="btn btn-primary btn-lg" style={{ background: "black", color: "#fff", border: "1px solid #fff" }} onClick={compound}>COMPOUND</button></td>
                     </tr>
 
                     {/* <tr>
@@ -670,7 +640,7 @@ const Interface = () => {
                   </div>
                   <div className="col-sm-6" style={{ textAlign: "right" }}>
                     <h3>Return of Investment</h3>
-                    <p>Daily Return: {calculate / 100 * roi} BUSD <br /> Weekly Return: {calculate / 100 * roi * 7} BUSD  <br /> Monthly Return: {calculate / 100 * roi * 30} BUSD </p>
+                    <p>Daily Return: {Number(calculate / 100 * roi).toFixed(2)} BUSD <br /> Weekly Return: {Number(calculate / 100 * roi * 7).toFixed(2)} BUSD  <br /> Monthly Return: {Number(calculate / 100 * roi * 30).toFixed(2)} BUSD </p>
                   </div>
                 </div>
               </div>
