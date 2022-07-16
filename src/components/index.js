@@ -4,6 +4,7 @@ import Web3 from "web3";
 import getAbi from "../Abi";
 import getAbiBusd from "./../Abi/busd";
 import logo from "./../assets/logo.png";
+import discord from "./../assets/discord-icon.svg"
 // import audit from "./../assets/audit.png";
 import { CONTRACTADDR } from "../Abi";
 
@@ -464,7 +465,7 @@ const Interface = () => {
       <br /> <div className="container">
         <div className="row">
           <div className="col-sm-4">
-            <div className="card cardDino">
+            <div className="card cardzeu">
 
               <div className="card-body">
                 <h4><b>Investment Portal</b></h4>
@@ -536,7 +537,7 @@ const Interface = () => {
           </div>
 
           <div className="col-sm-4">
-            <div className="card cardDino">
+            <div className="card cardzeu">
               <div className="card-body">
                 <h4><b>Statistics</b></h4>
                 <hr />
@@ -655,7 +656,12 @@ const Interface = () => {
         </center> */}
 
         <br />
-        <center><h5> <a href="https://twitter.com/dinobusd" style={{ color: "black", textDecoration: "none" }}><i className="fa fa-twitter"></i> Twitter </a> || <a href="https://t.me/DinoBusdOfficial" style={{ color: "black", textDecoration: "none" }}><i className="fa fa-telegram"></i> Telegram </a> || <a href="https://bscscan.com/address/0x6137291056de7d362711c6e4A7810823e5c79431#code" style={{ color: "black", textDecoration: "none" }}><i className="fa fa-line-chart"></i> Bscscan </a></h5></center>
+        <center><h5>
+          <a href="https://twitter.com/ZEUSTAKING" style={{ color: "black", textDecoration: "none" }}><i className="fa fa-twitter"></i> Twitter </a> - &nbsp;
+          <a href="https://t.me/ZEUSTAKING" style={{ color: "black", textDecoration: "none" }}><i className="fa fa-telegram"></i> Telegram </a> - &nbsp;
+          <a href="https://discord.gg/gqwudPDpkw" style={{ color: "black", textDecoration: "none" }}><img src={discord} width="22px" /> Discord </a> - &nbsp;
+          <a href="https://bscscan.com/address/0x6137291056de7d362711c6e4A7810823e5c79431#code" style={{ color: "black", textDecoration: "none" }}><i className="fa fa-line-chart"></i> Bscscan </a>
+        </h5></center>
 
         <br />
       </div>

@@ -17,7 +17,7 @@ body {
 
 }
 
-.cardDino {
+.cardzeu {
   height: 467px;
 }
 
@@ -53,7 +53,7 @@ tr {
     margin-bottom: 5px;
   }
 
-  .cardDino {
+  .cardzeu {
     height: auto;
     margin-bottom: 10px;
   }
