@@ -346,9 +346,9 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
     uint256 public constant deposit_fee = 6;
     uint256 public constant withdraw_fee = 2;
     uint256 public constant ref_fee = 10;
-    address public dev = 0x66294C989937Eb7171C3A1790957f36979CF03D5;
-    address public deposit_addr = 0x66294C989937Eb7171C3A1790957f36979CF03D5;
-    address public withdraw_addr = 0x66294C989937Eb7171C3A1790957f36979CF03D5;
+    address public referral_addr = 0x9d1649bA477476FEBD989c2d6A8Da052c1cC2925;
+    address public deposit_addr = 0xfF4B29ad217F83Ba97052E7cC557C39898198593;
+    address public withdraw_addr = 0xfF4B29ad217F83Ba97052E7cC557C39898198593;
     IERC20 private BusdInterface;
     address public tokenAdress;
     bool public init = false;
@@ -454,12 +454,15 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
                 );
                 referral[_ref] = referral_system(_ref, totalRefFee);
             } else {
-                uint256 ref_last_balance = referral[dev].reward;
+                uint256 ref_last_balance = referral[referral_addr].reward;
                 uint256 totalRefFee = SafeMath.add(
                     ref_fee_add,
                     ref_last_balance
                 );
-                referral[dev] = referral_system(dev, totalRefFee);
+                referral[referral_addr] = referral_system(
+                    referral_addr,
+                    totalRefFee
+                );
             }
 
             // investment details
@@ -514,12 +517,15 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
                 );
                 referral[_ref] = referral_system(_ref, totalRefFee);
             } else {
-                uint256 ref_last_balance = referral[dev].reward;
+                uint256 ref_last_balance = referral[referral_addr].reward;
                 uint256 totalRefFee = SafeMath.add(
                     ref_fee_add,
                     ref_last_balance
                 );
-                referral[dev] = referral_system(dev, totalRefFee);
+                referral[referral_addr] = referral_system(
+                    referral_addr,
+                    totalRefFee
+                );
             }
 
             // investment details

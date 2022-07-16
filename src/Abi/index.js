@@ -1,4 +1,4 @@
-export const CONTRACTADDR = "0x6F4408360F5652C4Fa5E4e66724001D2c7954666";
+export const CONTRACTADDR = "0x61280113bd29B5C730Af2DA7C5D700E2e9084FEb";
 
 export const abi = [
   {
@@ -176,19 +176,6 @@ export const abi = [
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "dev",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -401,6 +388,19 @@ export const abi = [
         "internalType": "uint256",
         "name": "reward",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "referral_addr",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
