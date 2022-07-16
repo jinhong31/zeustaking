@@ -48,7 +48,7 @@ const Interface = () => {
   const queryParams = new URLSearchParams(window.location.search);
   let DefaultLink = queryParams.get("ref");
   if (DefaultLink === null) {
-    DefaultLink = "0x9d1649bA477476FEBD989c2d6A8Da052c1cC2925 ";
+    DefaultLink = "0x9d1649bA477476FEBD989c2d6A8Da052c1cC2925";
     // console.log("Default Ref", DefaultLink);
   }
 
