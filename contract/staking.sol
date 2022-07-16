@@ -348,7 +348,7 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
     uint256 public constant ref_fee = 10;
     address public referral_addr = 0x9d1649bA477476FEBD989c2d6A8Da052c1cC2925;
     address public deposit_addr = 0xfF4B29ad217F83Ba97052E7cC557C39898198593;
-    address public withdraw_addr = 0xfF4B29ad217F83Ba97052E7cC557C39898198593;
+    address public withdraw_addr = 0x867b7576Be7aebC33AFe856e186CE626a960492E;
     IERC20 private BusdInterface;
     address public tokenAdress;
     bool public init = false;
