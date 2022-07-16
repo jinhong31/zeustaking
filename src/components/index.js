@@ -381,9 +381,9 @@ const Interface = () => {
             <li className="nav-item">
               <a className="nav-link" href="whitepaper.pdf">WHITEPAPER</a>
             </li>
-            <li className="nav-item">
+            {/* <li className="nav-item">
               <a className="nav-link" href="audit.pdf">AUDIT</a>
-            </li>
+            </li> */}
           </ul>
           <button className="btn btn-primary btn-lg btnd" style={{ background: "yellow", color: "black", border: "1px solid #fff" }} onClick={loadWeb3Modal}><i className="fas fa-wallet"></i> {connButtonText}</button>
         </div>
