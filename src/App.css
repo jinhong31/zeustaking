@@ -1,18 +1,18 @@
 body {
   /* background-color: black; */
   /* color: #f68f19; */
-  background-color: gray;
-  color: rgb(238, 193, 16);
+  color: gray;
+  background-color: rgb(238, 193, 16);
   font-weight: bold;
   font-family: 'Play', sans-serif;
 
 }
 
 .card {
-  /* color: black; */
+  color: black;
   /* background-color: #f68f19; */
-  color: grey;
-  background-color: rgb(238, 193, 16);
+  background-color: grey;
+  /* color: rgb(238, 193, 16); */
   border: 1px solid #fff;
 
 }

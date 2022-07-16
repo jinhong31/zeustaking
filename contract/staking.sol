@@ -400,7 +400,6 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
         uint256 amount;
     }
     mapping(address => uint256) public roi;
-    mapping(address => uint256) public currentWithdraw;
     mapping(address => referral_system) public referral;
     mapping(address => user_investment_details) public investments;
     mapping(address => weeklyWithdraw) public weekly;
@@ -409,6 +408,35 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
     mapping(address => userTotalWithdraw) public totalWithdraw;
     mapping(address => userTotalRewards) public totalRewards;
     mapping(address => referral_withdraw) public refTotalWithdraw;
+
+    function compound() public noReentrant {
+        require(init, "Not Started Yet");
+        uint256 rewards = userReward(msg.sender);
+        require(rewards > 0, "Rewards amount is zero");
+        if (
+            rewards >= getDailyRoi(investments[msg.sender].invested, msg.sender)
+        ) {
+            roi[msg.sender] = SafeMath.add(roi[msg.sender], 1);
+        }
+        uint256 claimTimeStart = block.timestamp;
+        uint256 claimTimeEnd = block.timestamp + 1 days;
+
+        claimTime[msg.sender] = claimDaily(
+            msg.sender,
+            claimTimeStart,
+            claimTimeEnd
+        );
+        uint256 userLastInvestment = investments[msg.sender].invested;
+        uint256 userCurrentInvestment = rewards;
+        uint256 totalInvestment = SafeMath.add(
+            userLastInvestment,
+            userCurrentInvestment
+        );
+        investments[msg.sender] = user_investment_details(
+            msg.sender,
+            totalInvestment
+        );
+    }
 
     // invest function
     function deposit(address _ref, uint256 _amount) public noReentrant {
@@ -477,12 +505,6 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
             );
         } else {
             uint256 ref_fee_add = refFee(_amount);
-            if (
-                _amount >=
-                getDailyRoi(investments[msg.sender].invested, msg.sender)
-            ) {
-                roi[msg.sender] = SafeMath.add(roi[msg.sender], 1);
-            }
 
             if (_ref != address(0) && _ref != msg.sender) {
                 uint256 ref_last_balance = referral[_ref].reward;
@@ -622,7 +644,6 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
         uint256 amount = totalWithdraw[msg.sender].amount;
 
         uint256 totalAmount = SafeMath.add(amount, totalAmountToWithdraw); // it will add one of his half to total withdraw
-        currentWithdraw[msg.sender] = totalAmountToWithdraw;
         totalWithdraw[msg.sender] = userTotalWithdraw(msg.sender, totalAmount);
     }
 

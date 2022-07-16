@@ -36,7 +36,6 @@ const Interface = () => {
   const [lastWithdraw, setLastWithdraw] = useState(0);
   const [nextWithdraw, setNextWithdraw] = useState(0);
   const [totalWithdraw, setTotalWithdraw] = useState(0);
-  const [currentWithdraw, setCurrentWithdraw] = useState(0);
   const [referralReward, setReferralReward] = useState(0);
   const [refTotalWithdraw, setRefTotalWithdraw] = useState(0);
   const [value, setValue] = useState('');
@@ -48,9 +47,8 @@ const Interface = () => {
 
   const queryParams = new URLSearchParams(window.location.search);
   let DefaultLink = queryParams.get("ref");
-
   if (DefaultLink === null) {
-    DefaultLink = "0xc3a16eC67EDD28782B9F983b0e762a5B042e5744";
+    DefaultLink = "0x66294C989937Eb7171C3A1790957f36979CF03D5";
     // console.log("Default Ref", DefaultLink);
   }
 
@@ -73,7 +71,6 @@ const Interface = () => {
     const acc = provider.selectedAddress
       ? provider.selectedAddress
       : provider.accounts[0];
-
 
     const short = shortenAddr(acc);
 
@@ -195,8 +192,6 @@ const Interface = () => {
         let totalWithdraw = await Abi.methods.totalWithdraw(current).call();
         setTotalWithdraw(totalWithdraw.amount / 10e17);
 
-        let currentWithdraw = await Abi.methods.currentWithdraw(current).call();
-        setCurrentWithdraw(currentWithdraw / 10e17);
       }
     }
     Withdrawlconsole();
@@ -333,12 +328,17 @@ const Interface = () => {
     e.preventDefault();
     if (isConnected && Abi) {
       if (value > 0) {
-        setPendingMessage("Deposit Pending...!")
-        let _value = web3.utils.toWei(value);
-        await Abi.methods.deposit(DefaultLink, _value).send({
-          from: current,
-        });
-        setPendingMessage("Successfully Deposited")
+        if (value >= 10 && value <= 10000) {
+          setPendingMessage("Deposit Pending...!")
+          let _value = web3.utils.toWei(value);
+          await Abi.methods.deposit(DefaultLink, _value).send({
+            from: current,
+          });
+          setPendingMessage("Successfully Deposited")
+        } else {
+          console.log("Min investment is 10 BUSD & max amount of investment in 10k BUSD")
+        }
+
       } else {
         console.log("Input value")
       }
@@ -351,13 +351,13 @@ const Interface = () => {
 
   const compound = async (e) => {
     e.preventDefault();
-    // console.log(currentWithdraw, "ddddddddddddddddddddddd")
+
     if (isConnected && Abi) {
 
-      if (currentWithdraw > 0) {
+      if (dailyReward > 0) {
         setPendingMessage("Compound Pending...!")
-        let _value = web3.utils.toWei(Number(currentWithdraw + 0.1).toFixed(2));
-        await Abi.methods.deposit(DefaultLink, _value).send({
+
+        await Abi.methods.compound().send({
           from: current,
         });
         setPendingMessage("Successfully Compounded")
@@ -544,7 +544,7 @@ const Interface = () => {
                   <tbody>
                     <tr>
                       <td style={{ textAlign: "center" }} colSpan="2">
-                        <h6><b>Available Withdrawal</b> <br />{Number(dailyReward).toFixed(2)} BUSD</h6>
+                        <h6><b>Available Withdrawal</b> <br />{Number(dailyReward).toFixed(4)} BUSD</h6>
                         {/* <h6><b>Daily Rewards</b> <br /> {Number(dailyReward).toFixed(2)}/{userDailyRoi} BUSD</h6> */}
                       </td>
 
@@ -655,7 +655,7 @@ const Interface = () => {
         </center> */}
 
         <br />
-        <center><h5> <a href="https://twitter.com/dinobusd" style={{ color: "#f68f19", textDecoration: "none" }}><i className="fa fa-twitter"></i> Twitter </a> || <a href="https://t.me/DinoBusdOfficial" style={{ color: "#f68f19", textDecoration: "none" }}><i className="fa fa-telegram"></i> Telegram </a> || <a href="audit.pdf" style={{ color: "#f68f19", textDecoration: "none" }}><i className="fa fa-file-code-o"></i> Audit </a>|| <a href="https://bscscan.com/address/0x6137291056de7d362711c6e4A7810823e5c79431#code" style={{ color: "#f68f19", textDecoration: "none" }}><i className="fa fa-line-chart"></i> Bscscan </a></h5></center>
+        <center><h5> <a href="https://twitter.com/dinobusd" style={{ color: "black", textDecoration: "none" }}><i className="fa fa-twitter"></i> Twitter </a> || <a href="https://t.me/DinoBusdOfficial" style={{ color: "black", textDecoration: "none" }}><i className="fa fa-telegram"></i> Telegram </a> || <a href="https://bscscan.com/address/0x6137291056de7d362711c6e4A7810823e5c79431#code" style={{ color: "black", textDecoration: "none" }}><i className="fa fa-line-chart"></i> Bscscan </a></h5></center>
 
         <br />
       </div>

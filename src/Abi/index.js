@@ -1,4 +1,4 @@
-export const CONTRACTADDR = "0xc1AdC7b252F2f162C1DADd350c3cBE96DD8B94a6";
+export const CONTRACTADDR = "0x6F4408360F5652C4Fa5E4e66724001D2c7954666";
 
 export const abi = [
   {
@@ -112,22 +112,10 @@ export const abi = [
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "currentWithdraw",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
+    "inputs": [],
+    "name": "compound",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -626,7 +614,6 @@ export const abi = [
     "type": "function"
   }
 ]
-
 // @ts-ignore
 export default function getAbi(web3) {
   return new web3.eth.Contract(abi, CONTRACTADDR);
