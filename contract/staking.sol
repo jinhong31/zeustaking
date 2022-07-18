@@ -583,7 +583,7 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
 
         uint256 nowTime = block.timestamp;
 
-        uint256 value = SafeMath.div(userDailyReturn, 120);
+        uint256 value = SafeMath.div(userDailyReturn, 1 days);
 
         uint256 earned = SafeMath.sub(nowTime, claimInvestTime);
 

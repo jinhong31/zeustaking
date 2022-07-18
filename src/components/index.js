@@ -463,7 +463,7 @@ const Interface = () => {
                 <h4><b>Referral Link</b></h4>
                 <hr />
                 <form>
-                  Share your Referral Link To Earn 10% of BUSD
+                  Share your Referral Link To Earn 12% of BUSD
                   <input type="text" value={refLink} className="form-control" />
                 </form>
               </div>
@@ -471,7 +471,7 @@ const Interface = () => {
             <br />
             <div className="card">
               <div className="card-body">
-                <h4><b>Referral Rewards  10%</b></h4>
+                <h4><b>Referral Rewards  12%</b></h4>
                 <hr />
                 <table className="table">
                   <tbody>
