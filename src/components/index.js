@@ -5,7 +5,6 @@ import getAbi from "../Abi";
 import getAbiBusd from "./../Abi/busd";
 import logo from "./../assets/logo.png";
 import discord from "./../assets/discord-icon.svg"
-// import audit from "./../assets/audit.png";
 import { CONTRACTADDR } from "../Abi";
 
 /* eslint-disable no-unused-vars */
@@ -18,8 +17,6 @@ const Interface = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [injectedProvider, setInjectedProvider] = useState();
   const [refetch, setRefetch] = useState(true);
-  const [errorMessage, setErrorMessage] = useState(null);
-  const [accounts, setAccounts] = useState(null);
   const [current, setCurrent] = useState(null);
   const [connButtonText, setConnButtonText] = useState("CONNECT");
   const [refLink, setRefLink] = useState(
@@ -29,18 +26,12 @@ const Interface = () => {
   const [userBalance, setUserBalance] = useState(0);
   const [userInvestment, setUserInvestment] = useState(0);
   const [userDailyRoi, setUserDailyRoi] = useState(0);
-  const [roi, setRoi] = useState(3);
+  const [roi, setRoi] = useState(5);
   const [dailyReward, setDailyReward] = useState(0);
-  const [startTime, setClaimStartTime] = useState(0);
-  const [deadline, setClaimDeadline] = useState(0);
-  const [approvedWithdraw, setApprovedWithdraw] = useState(0);
-  const [lastWithdraw, setLastWithdraw] = useState(0);
-  const [nextWithdraw, setNextWithdraw] = useState(0);
   const [totalWithdraw, setTotalWithdraw] = useState(0);
   const [referralReward, setReferralReward] = useState(0);
   const [refTotalWithdraw, setRefTotalWithdraw] = useState(0);
   const [value, setValue] = useState('');
-  const [value1, setValue1] = useState('');
   const [balance, setBalance] = useState(0);
   const [pendingMessage, setPendingMessage] = useState('');
   const [allowance, setAllowance] = useState();
@@ -50,7 +41,6 @@ const Interface = () => {
   let DefaultLink = queryParams.get("ref");
   if (DefaultLink === null) {
     DefaultLink = "0x9d1649bA477476FEBD989c2d6A8Da052c1cC2925";
-    // console.log("Default Ref", DefaultLink);
   }
 
   const logoutOfWeb3Modal = async () => {
@@ -78,9 +68,7 @@ const Interface = () => {
     setWeb3(new Web3(provider));
     setAbi(await getAbi(new Web3(provider)));
     setAbiBusd(await getAbiBusd(new Web3(provider)));
-    setAccounts([acc]);
     setCurrent(acc);
-    //     setShorttened(short);
     setIsConnected(true);
 
     setConnButtonText(short);
@@ -140,15 +128,10 @@ const Interface = () => {
     refData();
   }, [isConnected, current, web3, refetch]);
 
-
-
-
-
   useEffect(() => {
     const AbiContract = async () => {
       if (!isConnected || !web3) return;
       const contractBalance = await Abi.methods.getBalance().call();
-      // console.log(contractBalance)
       setContractBalance(contractBalance / 10e17);
     };
 
@@ -187,47 +170,20 @@ const Interface = () => {
   useEffect(() => {
     const Withdrawlconsole = async () => {
       if (isConnected && Abi) {
-        let approvedWithdraw = await Abi.methods.approvedWithdrawal(current).call();
-        setApprovedWithdraw(approvedWithdraw.amount / 10e17);
 
         let totalWithdraw = await Abi.methods.totalWithdraw(current).call();
         setTotalWithdraw(totalWithdraw.amount / 10e17);
 
       }
     }
+
     Withdrawlconsole();
     // eslint-disable-next-line
   }, [isConnected, refetch]);
 
   useEffect(() => {
-    const TimeLine = async () => {
-      if (isConnected && Abi) {
-        let claimTime = await Abi.methods.claimTime(current).call();
-        if (claimTime.startTime > 0) {
-          let _claimStart = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).format(claimTime.startTime + "000");
-          let _claimEnd = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).format(claimTime.deadline + "000");
-          setClaimStartTime(_claimStart);
-
-          setClaimDeadline(_claimEnd);
-
-          let weekly = await Abi.methods.weekly(current).call();
-          let _start = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).format(weekly.startTime + "000");
-          let _end = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).format(weekly.deadline + "000");
-
-          setLastWithdraw(_start);
-          setNextWithdraw(_end);
-        }
-      }
-    }
-    TimeLine();
-    // eslint-disable-next-line
-  }, [refetch]);
-
-
-  useEffect(() => {
     const ContractReward = async () => {
       if (isConnected && Abi) {
-
 
         let refEarnedWithdraw = await Abi.methods.referral(current).call();
         setReferralReward(refEarnedWithdraw.reward / 10e17);
@@ -256,24 +212,6 @@ const Interface = () => {
     approvalallowance();
 
   }, [isConnected, refetch]);
-
-
-
-  // buttons
-
-  const ClaimNow = async (e) => {
-    e.preventDefault();
-    if (isConnected && Abi) {
-      setPendingMessage("Claiming Funds")
-      await Abi.methods.claimDailyRewards().send({
-        from: current,
-      });
-      setPendingMessage("Claimed Successfully");
-
-    } else {
-      console.log("connect wallet");
-    }
-  };
 
   const withDraw = async (e) => {
     e.preventDefault();
@@ -376,15 +314,10 @@ const Interface = () => {
       <nav className="navbar navbar-expand-sm navbar-dark" style={{ background: "black" }}>
         <div className="container-fluid">
           <a className="navbar-brand" href="https://zeustaking.finance"><img src={logo} alt="logo" className="img-fluid" style={{ width: "200px" }} /></a>
-
           <ul className="navbar-nav me-auto">
-
             <li className="nav-item">
-              <a className="nav-link" href="whitepaper.pdf">WHITEPAPER</a>
+              <a className="nav-link" href="https://whitepaper.zeustaking.finance/">WHITEPAPER</a>
             </li>
-            {/* <li className="nav-item">
-              <a className="nav-link" href="audit.pdf">AUDIT</a>
-            </li> */}
           </ul>
           <button className="btn btn-primary btn-lg btnd" style={{ background: "yellow", color: "black", border: "1px solid #fff" }} onClick={loadWeb3Modal}><i className="fas fa-wallet"></i> {connButtonText}</button>
         </div>
@@ -402,71 +335,55 @@ const Interface = () => {
               </div>
             </center>
           </> :
-
           <></>
         }
         <div className="row">
           <div className="col-sm-3">
             <div className="card">
               <div className="card-body">
-                <center>  <h3>Contract Balance</h3>
-
+                <center>
+                  <h3>Contract Balance</h3>
                   <h3> {Number(contractBalance).toFixed(2)} BUSD</h3>
-
                 </center>
               </div>
             </div>
           </div>
-
-
-
           <div className="col-sm-3">
             <div className="card">
               <div className="card-body">
-                <center>  <h3>Daily ROI</h3>
-
+                <center>
+                  <h3>Daily ROI</h3>
                   <h3>{roi}%</h3>
-
                 </center>
               </div>
             </div>
           </div>
-
-
           <div className="col-sm-3">
             <div className="card">
               <div className="card-body">
-                <center>  <h3>Withdrawal Fee</h3>
-
+                <center>
+                  <h3>Withdrawal Fee</h3>
                   <h3>2%</h3>
-
                 </center>
-
               </div>
             </div>
           </div>
-
           <div className="col-sm-3">
             <div className="card">
               <div className="card-body">
-                <center>  <h3>Deposit Fee</h3>
-
+                <center>
+                  <h3>Deposit Fee</h3>
                   <h4>6%</h4>
-
                 </center>
               </div>
             </div>
           </div>
-
         </div>
-
       </div>
-
       <br /> <div className="container">
         <div className="row">
           <div className="col-sm-4">
             <div className="card cardzeu">
-
               <div className="card-body">
                 <h4><b>Investment Portal</b></h4>
                 <hr />
@@ -476,19 +393,16 @@ const Interface = () => {
                       <td><h5><b>Wallet Balance</b></h5></td>
                       <td style={{ textAlign: "right" }}><h5>{Number(userBalance / 10e17).toFixed(2)} BUSD</h5></td>
                     </tr>
-
                     <tr>
                       <td><h5><b>User Invested</b></h5></td>
                       <td style={{ textAlign: "right" }}><h5>{Number(userInvestment).toFixed(2)} BUSD</h5></td>
                     </tr>
-
                     <tr>
                       <td><h5><b>Daily User ROI</b></h5></td>
                       <td style={{ textAlign: "right" }}><h5>{Number(userDailyRoi).toFixed(2)} BUSD</h5></td>
                     </tr>
                   </tbody>
                 </table>
-
                 <form onSubmit={deposit}>
                   <table className="table">
                     <tbody>
@@ -500,7 +414,6 @@ const Interface = () => {
                         onChange={(e) => setValue(e.target.value)}
                       />
                       </td>
-
                         <td style={{ textAlign: "right" }}>
                           {allowance > 0 ?
                             <>
@@ -512,30 +425,13 @@ const Interface = () => {
                             </>
                           }
                         </td>
-
                       </tr>
                     </tbody>
                   </table>
-
                 </form>
-
-
-
-                <table className="table table-borderless">
-                  <tbody>
-                    {/* <tr style={{borderBottom:"none"}}>
-              <td><h4>Unstake Funds</h4></td>
-              
-              <td style={{textAlign:"right"}}><button className="btn btn-primary btn-lg" style={{background:"black",color:"#fff",border:"1px solid #fff"}} onClick={unStake}>UNSTAKE</button></td>
-            </tr> */}
-
-                  </tbody>
-                </table>
               </div>
             </div>
-
           </div>
-
           <div className="col-sm-4">
             <div className="card cardzeu">
               <div className="card-body">
@@ -546,40 +442,21 @@ const Interface = () => {
                     <tr>
                       <td style={{ textAlign: "center" }} colSpan="2">
                         <h6><b>Available Withdrawal</b> <br />{Number(dailyReward).toFixed(4)} BUSD</h6>
-                        {/* <h6><b>Daily Rewards</b> <br /> {Number(dailyReward).toFixed(2)}/{userDailyRoi} BUSD</h6> */}
                       </td>
-
-                      {/* <td style={{ textAlign: "right" }}><button className="btn btn-primary btn-lg" style={{ background: "black", color: "#fff", border: "1px solid #fff" }} onClick={ClaimNow}>Claim</button></td> */}
                     </tr>
-                    {/* <tr>
-                      <td><h6><b>Last Claim</b><br />{startTime}</h6></td>
-
-                      <td style={{ textAlign: "right" }}><h6><b>Next Claim</b><br />{deadline}</h6></td>
-                    </tr> */}
-
                     <tr>
-
                       <td style={{ textAlign: "center" }} ><button className="btn btn-primary btn-lg" style={{ background: "black", color: "#fff", border: "1px solid #fff" }} onClick={withDraw}>Withdraw</button></td>
                       <td><button className="btn btn-primary btn-lg" style={{ background: "black", color: "#fff", border: "1px solid #fff" }} onClick={compound}>COMPOUND</button></td>
                     </tr>
-
-                    {/* <tr>
-                      <td><h6><b>Last Withdrawal</b><br />{lastWithdraw}</h6></td>
-
-                      <td style={{ textAlign: "right" }}><h6><b>Next Withdrawal</b><br />{nextWithdraw}</h6></td>
-                    </tr> */}
-
                     <tr style={{ border: "none" }}>
                       <td><h5>Total Withdrawn</h5></td>
                       <td style={{ textAlign: "right" }}><h5>{Number(totalWithdraw).toFixed(2)} BUSD</h5></td>
                     </tr>
-
                   </tbody>
                 </table>
               </div>
             </div>
           </div>
-
           <div className="col-sm-4">
             <div className="card">
               <div className="card-body" style={{ marginBottom: "27px" }}>
@@ -612,9 +489,7 @@ const Interface = () => {
               </div>
             </div>
           </div>
-
         </div>
-
         <br />
         <div className="row">
           <div className="col-sm-12">
@@ -622,9 +497,7 @@ const Interface = () => {
               <div className="card-header">
                 Investment Calculator
               </div>
-
               <div className="card-body">
-
                 <div className="row">
                   <div className="col-sm-6">
                     <h3>BUSD AMOUNT</h3>
@@ -648,25 +521,18 @@ const Interface = () => {
             </div>
           </div>
         </div>
-
-        {/* <br />
-        <center>
-          <h2>Audit Partner</h2>
-          <a href="audit.pdf"><img src={audit} alt={audit} className="img-fluid" style={{ width: "300px" }} /> </a>
-        </center> */}
-
         <br />
-        <center><h5>
-          <a href="https://twitter.com/ZEUSTAKING" style={{ color: "black", textDecoration: "none" }}><i className="fa fa-twitter"></i> Twitter </a> - &nbsp;
-          <a href="https://t.me/ZEUSTAKING" style={{ color: "black", textDecoration: "none" }}><i className="fa fa-telegram"></i> Telegram </a> - &nbsp;
-          <a href="https://discord.gg/gqwudPDpkw" style={{ color: "black", textDecoration: "none" }}><img src={discord} width="22px" /> Discord </a> - &nbsp;
-          <a href="https://bscscan.com/address/0x6137291056de7d362711c6e4A7810823e5c79431#code" style={{ color: "black", textDecoration: "none" }}><i className="fa fa-line-chart"></i> Bscscan </a>
-        </h5></center>
-
+        <center>
+          <h5>
+            <a href="https://twitter.com/ZEUSTAKING" style={{ color: "black", textDecoration: "none" }}><i className="fa fa-twitter"></i> Twitter </a> - &nbsp;
+            <a href="https://t.me/ZEUSTAKING" style={{ color: "black", textDecoration: "none" }}><i className="fa fa-telegram"></i> Telegram </a> - &nbsp;
+            <a href="https://discord.gg/gqwudPDpkw" style={{ color: "black", textDecoration: "none" }}><img src={discord} width="22px" /> Discord </a> - &nbsp;
+            <a href="https://bscscan.com/address/0x6137291056de7d362711c6e4A7810823e5c79431#code" style={{ color: "black", textDecoration: "none" }}><i className="fa fa-line-chart"></i> Bscscan </a>
+          </h5>
+        </center>
         <br />
       </div>
     </>
-
   );
 }
 

@@ -341,7 +341,10 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
     uint256 public constant max = 10000 ether;
     uint256 public constant deposit_fee = 6;
     uint256 public constant withdraw_fee = 2;
-    uint256 public constant ref_fee = 10;
+    uint256 public constant ref_fee = 12;
+    uint256 public constant withdraw_penalty = 5;
+    uint256 public constant compound_penalty = 1;
+    uint256 public constant roi_limit = 50;
     address public referral_addr = 0x9d1649bA477476FEBD989c2d6A8Da052c1cC2925;
     address public deposit_addr = 0xfF4B29ad217F83Ba97052E7cC557C39898198593;
     address public withdraw_addr = 0x867b7576Be7aebC33AFe856e186CE626a960492E;
@@ -389,42 +392,13 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
     mapping(address => userTotalWithdraw) public totalWithdraw;
     mapping(address => referral_withdraw) public refTotalWithdraw;
 
-    function compound() public noReentrant {
-        require(init, "Not Started Yet");
-        uint256 rewards = userReward(msg.sender);
-        require(rewards > 0, "Rewards amount is zero");
-        if (
-            rewards >= getDailyRoi(investments[msg.sender].invested, msg.sender)
-        ) {
-            roi[msg.sender] = SafeMath.add(roi[msg.sender], 1);
-        }
-        uint256 claimTimeStart = block.timestamp;
-        uint256 claimTimeEnd = block.timestamp + 1 days;
-
-        claimTime[msg.sender] = claimDaily(
-            msg.sender,
-            claimTimeStart,
-            claimTimeEnd
-        );
-        uint256 userLastInvestment = investments[msg.sender].invested;
-        uint256 userCurrentInvestment = rewards;
-        uint256 totalInvestment = SafeMath.add(
-            userLastInvestment,
-            userCurrentInvestment
-        );
-        investments[msg.sender] = user_investment_details(
-            msg.sender,
-            totalInvestment
-        );
-    }
-
     function deposit(address _ref, uint256 _amount) public noReentrant {
         require(init, "Not Started Yet");
         require(_amount >= min && _amount <= max, "Cannot Deposit");
 
         if (!checkAlready()) {
             uint256 ref_fee_add = refFee(_amount);
-            roi[msg.sender] = 30;
+            roi[msg.sender] = 50;
             if (_ref != address(0) && _ref != msg.sender) {
                 uint256 ref_last_balance = referral[_ref].reward;
                 uint256 totalRefFee = SafeMath.add(
@@ -516,29 +490,37 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
         }
     }
 
-    function userReward(address _userAddress) public view returns (uint256) {
-        uint256 userInvestment = investments[_userAddress].invested;
-        uint256 userDailyReturn = getDailyRoi(userInvestment, _userAddress);
-
-        uint256 claimInvestTime = claimTime[_userAddress].startTime;
-
-        uint256 nowTime = block.timestamp;
-
-        uint256 value = SafeMath.div(userDailyReturn, 1 days);
-
-        uint256 earned = SafeMath.sub(nowTime, claimInvestTime);
-
-        uint256 totalEarned = SafeMath.mul(earned, value);
+    function compound() public noReentrant {
+        require(init, "Not Started Yet");
+        uint256 rewards = userReward(msg.sender);
+        require(rewards > 0, "Rewards amount is zero");
         if (
-            totalEarned >
-            getDailyRoi(investments[_userAddress].invested, _userAddress)
+            rewards >= getDailyRoi(investments[msg.sender].invested, msg.sender)
         ) {
-            totalEarned = getDailyRoi(
-                investments[_userAddress].invested,
-                _userAddress
-            );
+            roi[msg.sender] = SafeMath.add(roi[msg.sender], compound_penalty);
+            if (roi[msg.sender] >= roi_limit) {
+                withdraw_penalty = 5;
+                roi[msg.sender] = roi_limit;
+            }
         }
-        return totalEarned;
+        uint256 claimTimeStart = block.timestamp;
+        uint256 claimTimeEnd = block.timestamp + 1 days;
+
+        claimTime[msg.sender] = claimDaily(
+            msg.sender,
+            claimTimeStart,
+            claimTimeEnd
+        );
+        uint256 userLastInvestment = investments[msg.sender].invested;
+        uint256 userCurrentInvestment = rewards;
+        uint256 totalInvestment = SafeMath.add(
+            userLastInvestment,
+            userCurrentInvestment
+        );
+        investments[msg.sender] = user_investment_details(
+            msg.sender,
+            totalInvestment
+        );
     }
 
     function withdrawal() public noReentrant {
@@ -555,8 +537,10 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
             claimTimeEnd
         );
 
-        roi[msg.sender] = SafeMath.sub(roi[msg.sender], 2);
+        roi[msg.sender] = SafeMath.sub(roi[msg.sender], withdraw_penalty);
+
         if (roi[msg.sender] < 0) roi[msg.sender] = 0;
+        withdraw_penalty = SafeMath.mul(withdraw_penalty, 2);
         uint256 wFee = withdrawFee(rewards);
         uint256 totalAmountToWithdraw = SafeMath.sub(rewards, wFee);
         BusdInterface.transfer(msg.sender, totalAmountToWithdraw);
@@ -591,6 +575,31 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
         init = false;
     }
 
+    function userReward(address _userAddress) public view returns (uint256) {
+        uint256 userInvestment = investments[_userAddress].invested;
+        uint256 userDailyReturn = getDailyRoi(userInvestment, _userAddress);
+
+        uint256 claimInvestTime = claimTime[_userAddress].startTime;
+
+        uint256 nowTime = block.timestamp;
+
+        uint256 value = SafeMath.div(userDailyReturn, 1 days);
+
+        uint256 earned = SafeMath.sub(nowTime, claimInvestTime);
+
+        uint256 totalEarned = SafeMath.mul(earned, value);
+        if (
+            totalEarned >
+            getDailyRoi(investments[_userAddress].invested, _userAddress)
+        ) {
+            totalEarned = getDailyRoi(
+                investments[_userAddress].invested,
+                _userAddress
+            );
+        }
+        return totalEarned;
+    }
+
     function getDailyRoi(uint256 _amount, address _user)
         public
         view
@@ -601,7 +610,7 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
 
     function getUserRoi(address _user) public view returns (uint256) {
         if (roi[_user] == 0) {
-            return 30;
+            return 50;
         } else {
             return roi[_user];
         }
