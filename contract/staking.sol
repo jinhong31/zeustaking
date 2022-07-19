@@ -344,7 +344,7 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
     uint256 public constant ref_fee = 12;
     uint256 public constant compound_penalty = 1;
     uint256 public constant roi_limit = 50;
-    uint256 public withdraw_penalty = 2;
+    uint256 public withdraw_penalty = 5;
     address public referral_addr = 0x9d1649bA477476FEBD989c2d6A8Da052c1cC2925;
     address public deposit_addr = 0xfF4B29ad217F83Ba97052E7cC557C39898198593;
     address public withdraw_addr = 0x867b7576Be7aebC33AFe856e186CE626a960492E;
@@ -354,8 +354,8 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
     bool public alreadyInvested = false;
 
     constructor() {
-        tokenAdress = 0x4614668d17d0FFD422d3edeD7Dd2E8A759Aa4011;
-        // tokenAdress = 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56;
+        // tokenAdress = 0x4614668d17d0FFD422d3edeD7Dd2E8A759Aa4011;
+        tokenAdress = 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56;
         BusdInterface = IERC20(tokenAdress);
     }
 
