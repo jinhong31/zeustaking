@@ -342,9 +342,10 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
     uint256 public constant deposit_fee = 6;
     uint256 public constant withdraw_fee = 2;
     uint256 public constant ref_fee = 12;
-    uint256 public constant compound_penalty = 1;
     uint256 public constant roi_limit = 50;
     uint256 public withdraw_penalty = 5;
+    uint256 public compound_penalty = 1;
+    uint256 public withdraw_limit = 5;
     address public referral_addr = 0x9d1649bA477476FEBD989c2d6A8Da052c1cC2925;
     address public deposit_addr = 0xfF4B29ad217F83Ba97052E7cC557C39898198593;
     address public withdraw_addr = 0x867b7576Be7aebC33AFe856e186CE626a960492E;
@@ -525,7 +526,11 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
 
     function withdrawal() public noReentrant {
         require(init, "Not Started Yet");
-
+        require(
+            totalWithdraw[msg.sender].amount <
+                SafeMath.mul(investments[msg.sender].invested, withdraw_limit),
+            "Exceed withdral amount"
+        );
         uint256 rewards = userReward(msg.sender);
 
         uint256 claimTimeStart = block.timestamp;
@@ -543,11 +548,28 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
         withdraw_penalty = SafeMath.mul(withdraw_penalty, 2);
         uint256 wFee = withdrawFee(rewards);
         uint256 totalAmountToWithdraw = SafeMath.sub(rewards, wFee);
-        BusdInterface.transfer(msg.sender, totalAmountToWithdraw);
-        BusdInterface.transfer(withdraw_addr, wFee);
         uint256 amount = totalWithdraw[msg.sender].amount;
         uint256 totalAmount = SafeMath.add(amount, totalAmountToWithdraw);
-        totalWithdraw[msg.sender] = userTotalWithdraw(msg.sender, totalAmount);
+        uint256 limitAmount = SafeMath.mul(
+            investments[msg.sender].invested,
+            withdraw_limit
+        );
+        if (totalAmount > limitAmount) {
+            totalAmountToWithdraw = SafeMath.sub(limitAmount, amount);
+            wFee = SafeMath.div(
+                SafeMath.mul(investments[msg.sender].invested, 8),
+                100
+            );
+            BusdInterface.transfer(msg.sender, totalAmountToWithdraw);
+            BusdInterface.transfer(withdraw_addr, wFee);
+        } else {
+            BusdInterface.transfer(msg.sender, totalAmountToWithdraw);
+            BusdInterface.transfer(withdraw_addr, wFee);
+            totalWithdraw[msg.sender] = userTotalWithdraw(
+                msg.sender,
+                totalAmount
+            );
+        }
     }
 
     function Ref_Withdraw() external noReentrant {
@@ -573,6 +595,18 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
 
     function end_signal() public onlyOwner {
         init = false;
+    }
+
+    function set_withdraw_penalty(uint256 _penalty) external onlyOwner {
+        withdraw_penalty = _penalty;
+    }
+
+    function set_compound_penalty(uint256 _penalty) external onlyOwner {
+        compound_penalty = _penalty;
+    }
+
+    function set_withdraw_limit(uint256 _limit) external onlyOwner {
+        withdraw_limit = _limit;
     }
 
     function userReward(address _userAddress) public view returns (uint256) {
