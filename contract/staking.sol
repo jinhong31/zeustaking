@@ -567,6 +567,7 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
                 msg.sender,
                 limitAmount
             );
+            totalWithdraw[msg.sender] = userTotalWithdraw(msg.sender, 0);
         } else {
             BusdInterface.transfer(msg.sender, totalAmountToWithdraw);
             BusdInterface.transfer(withdraw_addr, wFee);
