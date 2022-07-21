@@ -399,7 +399,7 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
 
         if (!checkAlready()) {
             uint256 ref_fee_add = refFee(_amount);
-            roi[msg.sender] = 50;
+            roi[msg.sender] = roi_limit;
             if (_ref != address(0) && _ref != msg.sender) {
                 uint256 ref_last_balance = referral[_ref].reward;
                 uint256 totalRefFee = SafeMath.add(
@@ -554,7 +554,7 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
             investments[msg.sender].invested,
             withdraw_limit
         );
-        if (totalAmount > limitAmount) {
+        if (totalAmount >= limitAmount) {
             totalAmountToWithdraw = SafeMath.sub(limitAmount, amount);
             wFee = SafeMath.div(
                 SafeMath.mul(investments[msg.sender].invested, 8),
