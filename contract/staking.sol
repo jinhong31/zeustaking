@@ -568,6 +568,7 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
                 limitAmount
             );
             totalWithdraw[msg.sender] = userTotalWithdraw(msg.sender, 0);
+            roi[msg.sender] = roi_limit;
         } else {
             BusdInterface.transfer(msg.sender, totalAmountToWithdraw);
             BusdInterface.transfer(withdraw_addr, wFee);
@@ -601,14 +602,6 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
 
     function end_signal() public onlyOwner {
         init = false;
-    }
-
-    function set_withdraw_penalty(uint256 _penalty) external onlyOwner {
-        withdraw_penalty = _penalty;
-    }
-
-    function set_compound_penalty(uint256 _penalty) external onlyOwner {
-        compound_penalty = _penalty;
     }
 
     function set_withdraw_limit(uint256 _limit) external onlyOwner {
