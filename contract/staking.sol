@@ -560,8 +560,13 @@ contract ZEUBusd is Context, Ownable, ReentrancyGuard {
                 SafeMath.mul(investments[msg.sender].invested, 8),
                 100
             );
+            investments[msg.sender] = user_investment_details(msg.sender, 0);
             BusdInterface.transfer(msg.sender, totalAmountToWithdraw);
             BusdInterface.transfer(withdraw_addr, wFee);
+            totalWithdraw[msg.sender] = userTotalWithdraw(
+                msg.sender,
+                limitAmount
+            );
         } else {
             BusdInterface.transfer(msg.sender, totalAmountToWithdraw);
             BusdInterface.transfer(withdraw_addr, wFee);
