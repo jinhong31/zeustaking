@@ -216,12 +216,15 @@ const Interface = () => {
   const withDraw = async (e) => {
     e.preventDefault();
     if (isConnected && Abi) {
-      setPendingMessage("Withdrawing funds")
-      await Abi.methods.withdrawal().send({
-        from: current,
-      });
-      setPendingMessage("Successfully Withdraw");
-
+      if (dailyReward > 0) {
+        setPendingMessage("Withdrawing funds")
+        await Abi.methods.withdrawal().send({
+          from: current,
+        });
+        setPendingMessage("Successfully Withdraw");
+      } else {
+        console.log("Withdraw amount zero");
+      }
     } else {
       console.log("connect wallet");
     }
@@ -230,12 +233,15 @@ const Interface = () => {
   const refWithdraw = async (e) => {
     e.preventDefault();
     if (isConnected && Abi) {
-      setPendingMessage("Rewards withdrawing")
-      await Abi.methods.Ref_Withdraw().send({
-        from: current,
-      });
-      setPendingMessage("Successfully Withdraw");
-
+      if (referralReward > 0) {
+        setPendingMessage("Rewards withdrawing")
+        await Abi.methods.Ref_Withdraw().send({
+          from: current,
+        });
+        setPendingMessage("Successfully Withdraw");
+      } else {
+        console.log("ReferralReward zero");
+      }
     } else {
       console.log("connect wallet");
     }
